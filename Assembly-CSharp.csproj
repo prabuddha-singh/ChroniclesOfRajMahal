@@ -71,6 +71,7 @@
     <Compile Include="Assets\PlayerControllerScripts\FinalCharachterController\Scripts\ThirdPersonActions.cs" />
     <Compile Include="Assets\PlayerControllerScripts\FinalCharachterController\Scripts\Input\PlayerInputManager.cs" />
     <Compile Include="Assets\PlayerControllerScripts\FinalCharachterController\Scripts\Input\PlayerLocomotionInput.cs" />
+    <Compile Include="Assets\PlayerControllerScripts\FinalCharachterController\Scripts\PlayerInputActions.cs" />
     <Compile Include="Assets\PlayerControllerScripts\FinalCharachterController\Scripts\PlayerAnimations.cs" />
     <Compile Include="Assets\PlayerControllerScripts\FinalCharachterController\Scripts\Input\ThirdPersonInput.cs" />
   </ItemGroup>

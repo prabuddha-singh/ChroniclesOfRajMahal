@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
@@ -12,15 +13,29 @@ namespace PrabuddhaSingh.FinalCharachterController{
     private PlayerLocomotionInput _playerLocomotionInput;
     private PlayerState _playerState;
     private PlayerController _playerController;
+    private PlayerInputActions _playerInputActions;
+    
 
-    private static int inputHashX = Animator.StringToHash("InputX");
+     // locomotion hashes 
+        private static int inputHashX = Animator.StringToHash("InputX");
     private static int inputHashY = Animator.StringToHash("InputY");
     private static int inputMagnitudeHash = Animator.StringToHash("inputMagnitude");
     private static int isGroundedHash = Animator.StringToHash("isGrounded");
     private static int isFallingHash = Animator.StringToHash("isFalling");
     private static int isJumpingHash = Animator.StringToHash("isJumping");
-    private static int rotationMismatchHash = Animator.StringToHash("RotationMismatch");
     private static int isIdlingHash = Animator.StringToHash("isIdling");
+
+    //action hashes 
+   
+    private static int isAttackingHash = Animator.StringToHash("isAttacking");
+    private static int isGatheringHash = Animator.StringToHash("isGathering");
+    private static int isPlayingActionHash = Animator.StringToHash("isPLayingAction");
+    private int[] actionHashes;
+    
+
+    // camera hashes 
+
+        private static int rotationMismatchHash = Animator.StringToHash("RotationMismatch");
     private static int isRotatingToTargetHash = Animator.StringToHash("isRotatingToTarget");
 
     private float _sprintMaxBlendValue = 1.5f;
@@ -31,42 +46,50 @@ namespace PrabuddhaSingh.FinalCharachterController{
 
         void Awake()
         {
-            _playerLocomotionInput=GetComponent<PlayerLocomotionInput>();
-            _playerState=GetComponent<PlayerState>();
-            _playerController=GetComponent<PlayerController>();
+            _playerLocomotionInput = GetComponent<PlayerLocomotionInput>();
+            _playerState = GetComponent<PlayerState>();
+            _playerController = GetComponent<PlayerController>();
+            _playerInputActions = GetComponentInParent<PlayerInputActions>();
+
+            actionHashes = new int[] { isGatheringHash };
         }
 
         void Update(){
             UpdateAnimationState();
         }
 
-        private void UpdateAnimationState(){
-           bool isSprinting = _playerState.CurrentPlayerMovementState == PlayerMovementState.sprinting;
-           bool isIdling =  _playerState.CurrentPlayerMovementState == PlayerMovementState.Idling;
-           bool isJumping =  _playerState.CurrentPlayerMovementState == PlayerMovementState.jumping;
-           bool isRunning = _playerState.CurrentPlayerMovementState==PlayerMovementState.running;
-           bool isFalling = _playerState.CurrentPlayerMovementState == PlayerMovementState.falling;
-           bool isGrounded = _playerState.InGroundedState();
+        private void UpdateAnimationState()
+        {
+            bool isSprinting = _playerState.CurrentPlayerMovementState == PlayerMovementState.sprinting;
+            bool isIdling = _playerState.CurrentPlayerMovementState == PlayerMovementState.Idling;
+            bool isJumping = _playerState.CurrentPlayerMovementState == PlayerMovementState.jumping;
+            bool isRunning = _playerState.CurrentPlayerMovementState == PlayerMovementState.running;
+            bool isFalling = _playerState.CurrentPlayerMovementState == PlayerMovementState.falling;
+            bool isGrounded = _playerState.InGroundedState();
+            bool isPLayingAction = actionHashes.Any(hash => _animator.GetBool(hash));
 
-           bool isRunBlendValue = isRunning || isJumping || isFalling ; 
+            bool isRunBlendValue = isRunning || isJumping || isFalling;
 
-            Vector2 inputTarget= isSprinting?  _playerLocomotionInput.MovementInput * _sprintMaxBlendValue : 
-                                 isRunBlendValue ? _playerLocomotionInput.MovementInput *_runMaxBlendValue :
+            Vector2 inputTarget = isSprinting ? _playerLocomotionInput.MovementInput * _sprintMaxBlendValue :
+                                 isRunBlendValue ? _playerLocomotionInput.MovementInput * _runMaxBlendValue :
                                  _playerLocomotionInput.MovementInput * _walkMaxBlendValue;
 
-            _currentBlendInput = Vector3.Lerp(_currentBlendInput, inputTarget , locomotionBlendSpeed * Time.deltaTime);
+            _currentBlendInput = Vector3.Lerp(_currentBlendInput, inputTarget, locomotionBlendSpeed * Time.deltaTime);
 
-            
-            
-            _animator.SetFloat(inputHashX , _currentBlendInput.x);
-            _animator.SetFloat(inputHashY , _currentBlendInput.y);
-            _animator.SetFloat(inputMagnitudeHash , _currentBlendInput.magnitude);
-            _animator.SetBool(isGroundedHash , isGrounded) ;
-            _animator.SetBool(isFallingHash , isFalling) ;
-            _animator.SetBool(isJumpingHash , isJumping) ;
-            _animator.SetFloat(rotationMismatchHash , _playerController.RotationMismatch);
-            _animator.SetBool(isIdlingHash , isIdling) ;
-            _animator.SetBool(isRotatingToTargetHash , _playerController.IsRotatingToTarget);
+
+
+            _animator.SetFloat(inputHashX, _currentBlendInput.x);
+            _animator.SetFloat(inputHashY, _currentBlendInput.y);
+            _animator.SetFloat(inputMagnitudeHash, _currentBlendInput.magnitude);
+            _animator.SetBool(isGroundedHash, isGrounded);
+            _animator.SetBool(isFallingHash, isFalling);
+            _animator.SetBool(isJumpingHash, isJumping);
+            _animator.SetFloat(rotationMismatchHash, _playerController.RotationMismatch);
+            _animator.SetBool(isIdlingHash, isIdling);
+            _animator.SetBool(isRotatingToTargetHash, _playerController.IsRotatingToTarget);
+            _animator.SetBool(isGatheringHash, _playerInputActions.GatherPressed);
+            _animator.SetBool(isAttackingHash, _playerInputActions.AttackPressed);
+            _animator.SetBool(isPlayingActionHash, isPLayingAction);
             
         }
 

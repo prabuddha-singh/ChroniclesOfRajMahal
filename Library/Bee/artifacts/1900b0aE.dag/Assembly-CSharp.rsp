@@ -398,6 +398,7 @@
 "Assets/PlayerControllerScripts/FinalCharachterController/Scripts/PlayerAnimations.cs"
 "Assets/PlayerControllerScripts/FinalCharachterController/Scripts/PlayerController.cs"
 "Assets/PlayerControllerScripts/FinalCharachterController/Scripts/PlayerControlUtils.cs"
+"Assets/PlayerControllerScripts/FinalCharachterController/Scripts/PlayerInputActions.cs"
 "Assets/PlayerControllerScripts/FinalCharachterController/Scripts/PlayerState.cs"
 "Assets/PlayerControllerScripts/FinalCharachterController/Scripts/ThirdPersonActions.cs"
 -langversion:9.0

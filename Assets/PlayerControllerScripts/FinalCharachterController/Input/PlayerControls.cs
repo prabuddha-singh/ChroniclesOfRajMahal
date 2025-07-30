@@ -259,6 +259,54 @@ namespace PrabuddhaSingh.FinalCharachterController
                     ""isPartOfComposite"": false
                 }
             ]
+        },
+        {
+            ""name"": ""PlayerActionsMap"",
+            ""id"": ""a65b985d-5229-4dac-9783-0590e71cd11c"",
+            ""actions"": [
+                {
+                    ""name"": ""Attack"",
+                    ""type"": ""Button"",
+                    ""id"": ""5a815b4d-de0c-484d-926f-28247947e644"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Gather"",
+                    ""type"": ""Button"",
+                    ""id"": ""431e306b-8d86-431e-b9ba-300005a97ab9"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""c30d5a66-1ddb-4a65-b512-9965b69e21f1"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Attack"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a8a27c9e-87d6-4410-bc21-b2ca210c407f"",
+                    ""path"": ""<Keyboard>/e"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Gather"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": []
@@ -273,6 +321,10 @@ namespace PrabuddhaSingh.FinalCharachterController
             // ThirdPersonMap
             m_ThirdPersonMap = asset.FindActionMap("ThirdPersonMap", throwIfNotFound: true);
             m_ThirdPersonMap_MouseScroll = m_ThirdPersonMap.FindAction("MouseScroll", throwIfNotFound: true);
+            // PlayerActionsMap
+            m_PlayerActionsMap = asset.FindActionMap("PlayerActionsMap", throwIfNotFound: true);
+            m_PlayerActionsMap_Attack = m_PlayerActionsMap.FindAction("Attack", throwIfNotFound: true);
+            m_PlayerActionsMap_Gather = m_PlayerActionsMap.FindAction("Gather", throwIfNotFound: true);
         }
 
         public void Dispose()
@@ -454,6 +506,60 @@ namespace PrabuddhaSingh.FinalCharachterController
             }
         }
         public ThirdPersonMapActions @ThirdPersonMap => new ThirdPersonMapActions(this);
+
+        // PlayerActionsMap
+        private readonly InputActionMap m_PlayerActionsMap;
+        private List<IPlayerActionsMapActions> m_PlayerActionsMapActionsCallbackInterfaces = new List<IPlayerActionsMapActions>();
+        private readonly InputAction m_PlayerActionsMap_Attack;
+        private readonly InputAction m_PlayerActionsMap_Gather;
+        public struct PlayerActionsMapActions
+        {
+            private @PlayerControls m_Wrapper;
+            public PlayerActionsMapActions(@PlayerControls wrapper) { m_Wrapper = wrapper; }
+            public InputAction @Attack => m_Wrapper.m_PlayerActionsMap_Attack;
+            public InputAction @Gather => m_Wrapper.m_PlayerActionsMap_Gather;
+            public InputActionMap Get() { return m_Wrapper.m_PlayerActionsMap; }
+            public void Enable() { Get().Enable(); }
+            public void Disable() { Get().Disable(); }
+            public bool enabled => Get().enabled;
+            public static implicit operator InputActionMap(PlayerActionsMapActions set) { return set.Get(); }
+            public void AddCallbacks(IPlayerActionsMapActions instance)
+            {
+                if (instance == null || m_Wrapper.m_PlayerActionsMapActionsCallbackInterfaces.Contains(instance)) return;
+                m_Wrapper.m_PlayerActionsMapActionsCallbackInterfaces.Add(instance);
+                @Attack.started += instance.OnAttack;
+                @Attack.performed += instance.OnAttack;
+                @Attack.canceled += instance.OnAttack;
+                @Gather.started += instance.OnGather;
+                @Gather.performed += instance.OnGather;
+                @Gather.canceled += instance.OnGather;
+            }
+
+            private void UnregisterCallbacks(IPlayerActionsMapActions instance)
+            {
+                @Attack.started -= instance.OnAttack;
+                @Attack.performed -= instance.OnAttack;
+                @Attack.canceled -= instance.OnAttack;
+                @Gather.started -= instance.OnGather;
+                @Gather.performed -= instance.OnGather;
+                @Gather.canceled -= instance.OnGather;
+            }
+
+            public void RemoveCallbacks(IPlayerActionsMapActions instance)
+            {
+                if (m_Wrapper.m_PlayerActionsMapActionsCallbackInterfaces.Remove(instance))
+                    UnregisterCallbacks(instance);
+            }
+
+            public void SetCallbacks(IPlayerActionsMapActions instance)
+            {
+                foreach (var item in m_Wrapper.m_PlayerActionsMapActionsCallbackInterfaces)
+                    UnregisterCallbacks(item);
+                m_Wrapper.m_PlayerActionsMapActionsCallbackInterfaces.Clear();
+                AddCallbacks(instance);
+            }
+        }
+        public PlayerActionsMapActions @PlayerActionsMap => new PlayerActionsMapActions(this);
         public interface IPlayerLocomotionMapActions
         {
             void OnMovement(InputAction.CallbackContext context);
@@ -465,6 +571,11 @@ namespace PrabuddhaSingh.FinalCharachterController
         public interface IThirdPersonMapActions
         {
             void OnMouseScroll(InputAction.CallbackContext context);
+        }
+        public interface IPlayerActionsMapActions
+        {
+            void OnAttack(InputAction.CallbackContext context);
+            void OnGather(InputAction.CallbackContext context);
         }
     }
 }

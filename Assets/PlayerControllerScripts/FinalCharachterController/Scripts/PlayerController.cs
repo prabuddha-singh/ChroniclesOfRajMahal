@@ -79,7 +79,7 @@ namespace PrabuddhaSingh.FinalCharachterController{
             bool isMoveInput = _playerLocomotionInput.MovementInput != Vector2.zero;                  //order in which
             bool isMoveLaterally = IsMoveLaterally();                                                 // this code is written
             bool isSprinting = _playerLocomotionInput.SprintToggledOn && isMoveLaterally;             // matters here 
-            bool isWalking = (isMoveLaterally && !canRun) || _playerLocomotionInput.WalkToggledOn;    // cause each state is checked 
+            bool isWalking = isMoveLaterally && (!canRun || _playerLocomotionInput.WalkToggledOn);    // cause each state is checked 
             bool isGrounded = IsGrounded();                                                           // for the player accordingly 
 
             PlayerMovementState lateralstate = isWalking ? PlayerMovementState.walking :
@@ -167,7 +167,7 @@ namespace PrabuddhaSingh.FinalCharachterController{
         }
 
         private bool IsMoveLaterally(){
-           Vector3 lateralVelocity = new Vector3(_characterController.velocity.x ,0f , _characterController.velocity.y);
+           Vector3 lateralVelocity = new Vector3(_characterController.velocity.x ,0f , _characterController.velocity.z);
 
            return lateralVelocity.magnitude >movingThreshold ;  
         }
