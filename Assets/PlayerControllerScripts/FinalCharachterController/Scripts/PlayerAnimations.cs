@@ -25,6 +25,9 @@ namespace PrabuddhaSingh.FinalCharachterController{
     private static int isJumpingHash = Animator.StringToHash("isJumping");
     private static int isIdlingHash = Animator.StringToHash("isIdling");
 
+    private static readonly int verticalVelocityHash = Animator.StringToHash("VerticalVelocity");
+    private static readonly int isInJumpAnimHash = Animator.StringToHash("isInJumpAnim");
+
     //action hashes 
    
     private static int isAttackingHash = Animator.StringToHash("isAttacking");
@@ -51,7 +54,7 @@ namespace PrabuddhaSingh.FinalCharachterController{
             _playerController = GetComponent<PlayerController>();
             _playerInputActions = GetComponentInParent<PlayerInputActions>();
 
-            actionHashes = new int[] { isGatheringHash };
+            actionHashes = new int[] { isGatheringHash , isAttackingHash};
         }
 
         void Update(){
@@ -65,7 +68,8 @@ namespace PrabuddhaSingh.FinalCharachterController{
             bool isJumping = _playerState.CurrentPlayerMovementState == PlayerMovementState.jumping;
             bool isRunning = _playerState.CurrentPlayerMovementState == PlayerMovementState.running;
             bool isFalling = _playerState.CurrentPlayerMovementState == PlayerMovementState.falling;
-            bool isGrounded = _playerState.InGroundedState();
+            bool isGrounded = _playerController.IsGroundedExpose;
+            float animVelocity = Mathf.Clamp(_playerController.VerticalVelocityExpose,5f,-5f);
             bool isPLayingAction = actionHashes.Any(hash => _animator.GetBool(hash));
 
             bool isRunBlendValue = isRunning || isJumping || isFalling;
@@ -75,7 +79,7 @@ namespace PrabuddhaSingh.FinalCharachterController{
                                  _playerLocomotionInput.MovementInput * _walkMaxBlendValue;
 
             _currentBlendInput = Vector3.Lerp(_currentBlendInput, inputTarget, locomotionBlendSpeed * Time.deltaTime);
-
+            
 
 
             _animator.SetFloat(inputHashX, _currentBlendInput.x);
@@ -88,8 +92,10 @@ namespace PrabuddhaSingh.FinalCharachterController{
             _animator.SetBool(isIdlingHash, isIdling);
             _animator.SetBool(isRotatingToTargetHash, _playerController.IsRotatingToTarget);
             _animator.SetBool(isGatheringHash, _playerInputActions.GatherPressed);
-            _animator.SetBool(isAttackingHash, _playerInputActions.AttackPressed);
+            _animator.SetBool(isAttackingHash, _playerState.CurrentPlayerActionState == PlayerActionStates.Attacking);
             _animator.SetBool(isPlayingActionHash, isPLayingAction);
+            _animator.SetFloat(verticalVelocityHash, animVelocity);
+            _animator.SetBool(isInJumpAnimHash, _playerController.IsInJumpAnim);
             
         }
 

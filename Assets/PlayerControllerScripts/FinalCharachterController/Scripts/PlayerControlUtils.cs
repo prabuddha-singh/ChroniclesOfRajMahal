@@ -3,21 +3,38 @@ using System.Collections.Generic;
 using System.Net.Http.Headers;
 using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEngine;
-using UnityEngine.ProBuilder;
+//using UnityEngine.ProBuilder;
 
 namespace PrabuddhaSingh.FinalCharachterController{
     public class PlayerControlUtils{
-         public static Vector3 GetNormalWithSphereCast(CharacterController characterController , LayerMask mask = default){
-              Vector3 normal = Vector3.up;
-              Vector3 centre = characterController.transform.position + characterController.center;
-              float distance = characterController.height / 2f + characterController.stepOffset + 0.01f;
+        public static bool CheckGrounded(
+               CharacterController controller,
+               out Vector3 groundNormal)
+          {
+    
+             groundNormal = Vector3.up;
 
-            RaycastHit hit;
-            if(Physics.SphereCast(centre ,characterController.radius , Vector3.down, out hit, distance ,  mask)){
-                 normal = hit.normal;
-            }
-            return normal;
-         } 
+             LayerMask mask = LayerMask.GetMask("Default");
+
+              Vector3 centre = controller.transform.position + controller.center;
+              float distance = controller.height / 2f + controller.stepOffset + 0.09f;
+
+           if (Physics.SphereCast(
+               centre,
+               controller.radius,
+               Vector3.down,
+               out RaycastHit hit,
+               distance,
+               mask,
+               QueryTriggerInteraction.Ignore))
+          {
+               groundNormal = hit.normal;
+               return true;
+          }
+
+      return false;
+     }
+
     }
 }
 

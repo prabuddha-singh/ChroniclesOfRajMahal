@@ -12,16 +12,19 @@ namespace PrabuddhaSingh.FinalCharachterController
     public class PlayerInputActions : MonoBehaviour, PlayerControls.IPlayerActionsMapActions
     {
 
-        public bool AttackPressed { get; private set; }
         public bool GatherPressed { get; private set; }
 
         private PlayerLocomotionInput _playerLocomotionInput;
         private PlayerState _playerState;
+        private PlayerController _playerController;
+        private PlayerCombat _playerCombat;
 
         void Awake()
         {
             _playerLocomotionInput = GetComponent<PlayerLocomotionInput>();
             _playerState = GetComponent<PlayerState>();
+            _playerController = GetComponent<PlayerController>();
+            _playerCombat = GetComponent<PlayerCombat>();
         }
 
         private void OnEnable()
@@ -53,33 +56,29 @@ namespace PrabuddhaSingh.FinalCharachterController
         public void SetGatherPressedFalse()
         {
             GatherPressed = false;
-        }
-
-        public void SetAttackPressedFalse()
-        {
-            AttackPressed = false;
+            _playerState.ClearPlayerActionState();
         }
 
         void Update()
         {
-            if (_playerLocomotionInput.MovementInput != Vector2.zero ||
-                 _playerState.CurrentPlayerMovementState == PlayerMovementState.jumping ||
-                  _playerState.CurrentPlayerMovementState == PlayerMovementState.falling)
+
+            if (_playerState.IsPlayingAction()) return ;
+            else if (GatherPressed)
             {
+                _playerState.SetPlayerActionState(PlayerActionStates.Gathering);
+                _playerController.ResetLateralVelocity();
                 GatherPressed = false;
             }
         }
-
-        
-
         public void OnAttack(InputAction.CallbackContext context)
         {
+            
             if (!context.performed)
             {
                 return;
             }
-
-            AttackPressed = true;
+ 
+            _playerCombat.HandleActionInput();
         }
 
         public void OnGather(InputAction.CallbackContext context)
