@@ -1,0 +1,24 @@
+# === Unity generated ===
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+
+# === Build outputs ===
+[Bb]uild/
+[Bb]uilds/
+
+# === IDE files ===
+.vscode/
+*.csproj
+*.sln
+*.user
+*.userprefs
+
+# === OS files ===
+.DS_Store
+Thumbs.db
+
+
+*.fbx

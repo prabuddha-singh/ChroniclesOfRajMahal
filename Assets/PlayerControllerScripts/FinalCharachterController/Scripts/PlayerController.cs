@@ -10,7 +10,7 @@ using System;
 
 namespace PrabuddhaSingh.FinalCharachterController{
     [DefaultExecutionOrder(-1)]
-    public class PlayerController : MonoBehaviour
+    public class PlayerController : MonoBehaviour , IKnockbackable 
 {
     [Header("Componenets")]
     [SerializeField] private CharacterController _characterController;
@@ -28,10 +28,13 @@ namespace PrabuddhaSingh.FinalCharachterController{
     public float sprintSpeed = 7f;
     public float drag=0.1f;
     public float movingThreshold= 0.01f;
-    public float gravity =25f;
-    public float jumpSpeed=0.01f;
-    public float antiBump = 0f;
-    public float terminalVelocity =50f;
+    public float gravity =-25f;
+    public float jumpSpeed=7f;
+    public float terminalVelocity =-50f;
+    public bool IsGroundedExpose => _isGrounded;
+
+    public float VerticalVelocityExpose => _verticalVelocity;
+    
     
    
    [Header("Animations")]
@@ -52,9 +55,26 @@ namespace PrabuddhaSingh.FinalCharachterController{
     private float _rotationTimer = 0f;
     private float _verticalVelocity = 0f;
     private bool _isRotatingclockWise = false;
-    private bool _jumpedLastFrame= false;
+    private float _jumpGraceTimer ;
+    private const float JumpGraceTime = 0.12f;
     private float _stepOffSet ;
+    private bool _isGrounded;
+    private float _groundedBufferTimer;
+    private Vector3 _chachedLateralVelocity ; 
+    private bool _ledgeAssistUsed;
+    private float groundedBufferTime = 0.08f;
+    private const float GroundStickForce = -2f;
+    private Vector3 _knockbackVelocity;
+    private float _knockbackTimer;
+    private bool _isKnockbackActive;
+    
+    [SerializeField] private float ledgeAssistWindow = 0.25f;
+    private float ledgeAssistTimer ; 
+    
     private PlayerMovementState _lastMovementState = PlayerMovementState.falling;
+
+    private float _jumpAnimTimer ;
+    public bool IsInJumpAnim => _jumpAnimTimer > 0f;
 
     private PlayerState _playerState;
 
@@ -62,135 +82,260 @@ namespace PrabuddhaSingh.FinalCharachterController{
         {
             _playerLocomotionInput  = GetComponent<PlayerLocomotionInput>();
             _playerState = GetComponent<PlayerState>();
-            antiBump = sprintSpeed;
             _stepOffSet = _characterController.stepOffset;
+            _chachedLateralVelocity = Vector3.zero;
         }
 
         private void Update(){
-            UpdateMovementState();            // prioritize updating movement state 
+            HandleKnockback();             // first handle knockback if any otherwise procees as follows 
             HandleVerticalMovement();      // first handle vertical movememt 
-            HandleLateralMovement();        // then handle lateral movement 
+            if(_jumpAnimTimer >0f)
+                _jumpAnimTimer -= Time.deltaTime;
+            if(ledgeAssistTimer >0f)
+                ledgeAssistTimer -= Time.deltaTime;
+            HandleLateralMovement();          // then handle lateral movement 
+            UpdateMovementState();            // prioritize updating movement state                                   
         }
 
         private void UpdateMovementState(){
-            _lastMovementState= _playerState.CurrentPlayerMovementState;
+            bool hasMoveInput = _playerLocomotionInput.MovementInput.sqrMagnitude > 0.01f;
+            bool isGrounded = _isGrounded;
+            if (isGrounded)
+            {
+                if (!hasMoveInput)
+                {
+                    _playerState.SetPlayerMovementState(PlayerMovementState.Idling);
+                }
+                else
+                {
+                    bool canRun = CanRun();
+                    bool WantsSprint = _playerLocomotionInput.SprintToggledOn;
+                    bool WantsWalk = _playerLocomotionInput.WalkToggledOn;
 
-            bool canRun = CanRun();
-            bool isMoveInput = _playerLocomotionInput.MovementInput != Vector2.zero;                  //order in which
-            bool isMoveLaterally = IsMoveLaterally();                                                 // this code is written
-            bool isSprinting = _playerLocomotionInput.SprintToggledOn && isMoveLaterally;             // matters here 
-            bool isWalking = isMoveLaterally && (!canRun || _playerLocomotionInput.WalkToggledOn);    // cause each state is checked 
-            bool isGrounded = IsGrounded();                                                           // for the player accordingly 
+                    if(WantsSprint && canRun)
+                    {
+                        _playerState.SetPlayerMovementState(PlayerMovementState.sprinting);
+                    }
 
-            PlayerMovementState lateralstate = isWalking ? PlayerMovementState.walking :
-                                              isSprinting ? PlayerMovementState.sprinting :
-                                              isMoveLaterally || isMoveInput ? PlayerMovementState.running : PlayerMovementState.Idling;
-                                               _playerState.SetPlayerMovementState(lateralstate); 
+                    else if(WantsWalk)
+                    {
+                        _playerState.SetPlayerMovementState(PlayerMovementState.walking);
+                    }
 
-            if((!isGrounded || _jumpedLastFrame) && _characterController.velocity.y >0f){
-                _playerState.SetPlayerMovementState(PlayerMovementState.jumping);
-                _jumpedLastFrame=false;
-                _characterController.stepOffset= 0f;
+                    else
+                    {
+                        _playerState.SetPlayerMovementState(PlayerMovementState.running); 
+                    }
+
+                }
             }
-            else if((!isGrounded || _jumpedLastFrame) && _characterController.velocity.y <0f){
-                _playerState.SetPlayerMovementState(PlayerMovementState.falling);
-                _jumpedLastFrame=false;
-                _characterController.stepOffset= 0f;   
+
+            if(!isGrounded){
+                if(_verticalVelocity > 0f)
+                {
+                    _playerState.SetPlayerMovementState(PlayerMovementState.jumping);
+                }
+                else
+                {
+                    _playerState.SetPlayerMovementState(PlayerMovementState.falling);
+                }            
             }
-            else{
-                _characterController.stepOffset = _stepOffSet;
+        }
+
+
+        private void HandleKnockback()
+        {
+            if(!_isKnockbackActive)
+            return;
+
+            _knockbackTimer -= Time.deltaTime;
+
+            if(_knockbackTimer <= 0f)
+            {
+                _isKnockbackActive = false;
+                _knockbackVelocity = Vector3.zero;
+                return;
             }
+
+            _characterController.Move(_knockbackVelocity * Time.deltaTime);
         }
 
         private void HandleVerticalMovement(){
-             bool isGrounded = _playerState.InGroundedState();
+            if (_jumpGraceTimer > 0f)
+                 _jumpGraceTimer -= Time.deltaTime;
 
-              _verticalVelocity -= gravity * Time.deltaTime;
+            bool rawGrounded = _jumpGraceTimer <= 0f && IsGrounded(out _, out _);
 
-            if(isGrounded && _verticalVelocity <0){
-                _verticalVelocity = -antiBump;
+            if (rawGrounded)
+            {
+                _groundedBufferTimer = groundedBufferTime;
+            }
+            else
+            {
+                _groundedBufferTimer -= Time.deltaTime;
             }
 
-            if(isGrounded && _playerLocomotionInput.JumpPressed){
-                _verticalVelocity +=  Mathf.Sqrt(jumpSpeed * 3 * gravity);
-                _jumpedLastFrame = true;
+            _isGrounded = _groundedBufferTimer > 0f;
+
+            
+
+            if (_isGrounded){
+
+                _ledgeAssistUsed= false;
+
+                if (!_playerLocomotionInput.JumpPressed)
+                {
+                    _verticalVelocity = GroundStickForce;
+                }
+                if (_playerLocomotionInput.JumpPressed){
+                _verticalVelocity = jumpSpeed;
+                _jumpGraceTimer = JumpGraceTime;
+                _jumpAnimTimer = 0.35f;
+
+                ledgeAssistTimer = ledgeAssistWindow;
+                }
+           }
+           else{
+            _verticalVelocity += gravity * Time.deltaTime;
+
+            if (_verticalVelocity < terminalVelocity)
+                _verticalVelocity = terminalVelocity;
             }
 
-            if(_playerState.IsStateGroundedState(_lastMovementState) && !isGrounded){
-                    _verticalVelocity += antiBump;
-            }
-
-            if(Mathf.Abs(_verticalVelocity)> Mathf.Abs(terminalVelocity)){
-                _verticalVelocity = -1f *Mathf.Abs(terminalVelocity);
-            }
 
         }
         private void HandleLateralMovement(){
-              bool isSprinting = _playerState.CurrentPlayerMovementState == PlayerMovementState.sprinting;
-              bool isGrounded = _playerState.InGroundedState();
-              bool isWalking = _playerState.CurrentPlayerMovementState == PlayerMovementState.walking;
-
-              float lateralAcceleration =!isGrounded ? inAirAcceleration :
-               isWalking ? walkAcceleration : 
-               isSprinting ? sprintAcceleration : acceleration;
 
 
-              float clampLateralMagnitude =!isGrounded ? sprintSpeed :
-                                            isWalking ? walkSpeed : 
-                                            isSprinting? sprintSpeed : speed;
+            if(_isKnockbackActive)
+                return;
 
-            Vector3 cameraForwardXZ = new Vector3(_playerCamera.transform.forward.x,0f,_playerCamera.transform.forward.z).normalized;
-            Vector3 cameraRightXz = new Vector3(_playerCamera.transform.right.x,0f,_playerCamera.transform.right.z).normalized;
-            Vector3 movementDirection =cameraRightXz*_playerLocomotionInput.MovementInput.x + cameraForwardXZ* _playerLocomotionInput.MovementInput.y;
+            if (_playerState.BlocksMovement())
+            {
+                Vector3 velocity = new Vector3(0f, _verticalVelocity, 0f);
+                _characterController.Move(velocity * Time.deltaTime);
+                return;
+            }
 
-            Vector3 movementDelta = movementDirection * lateralAcceleration * Time.deltaTime;
-            Vector3 newVelocity = _characterController.velocity + movementDelta;
+             bool isSprinting = _playerState.CurrentPlayerMovementState == PlayerMovementState.sprinting;
+             bool isWalking = _playerState.CurrentPlayerMovementState == PlayerMovementState.walking;
+             bool isGroundedValue = _isGrounded;
 
-            Vector3 currentdrag= newVelocity.normalized * drag * Time.deltaTime;
-            newVelocity=(newVelocity.magnitude > drag * Time.deltaTime) ? newVelocity - currentdrag : Vector3.zero;
-            newVelocity = Vector3.ClampMagnitude(new Vector3(newVelocity.x , 0f , newVelocity.z), clampLateralMagnitude);
-            newVelocity.y += _verticalVelocity;
-            newVelocity = !isGrounded ? HandleSteepWalls(newVelocity) : newVelocity;
+            float lateralAcceleration = isGroundedValue?(isWalking ? walkAcceleration:
+                                        isSprinting ? sprintAcceleration :
+                                        acceleration)
+                                        : inAirAcceleration;
+                
+            float maxSpeed = isWalking? walkSpeed:
+                             isSprinting ?sprintSpeed :
+                             speed;
 
-            _characterController.Move(newVelocity * Time.deltaTime);
+            Vector3 cameraForwardXZ = new Vector3(_playerCamera.transform.forward.x, 0f, _playerCamera.transform.forward.z).normalized;
+            Vector3 cameraRightXZ = new Vector3(_playerCamera.transform.right.x, 0f, _playerCamera.transform.right.z).normalized;
+
+            Vector3 movementDirection =
+            cameraRightXZ * _playerLocomotionInput.MovementInput.x +
+            cameraForwardXZ * _playerLocomotionInput.MovementInput.y;
+
+            Vector3 lateralVelocity = _chachedLateralVelocity;
+
+            if (isGroundedValue)
+            {
+                lateralVelocity += movementDirection * lateralAcceleration * Time.deltaTime;
+
+                if(lateralVelocity.magnitude > 0f)
+                {
+                    Vector3 dragVector = lateralVelocity.normalized * drag * Time.deltaTime;
+                   lateralVelocity = (lateralVelocity.magnitude > dragVector.magnitude) ? lateralVelocity - dragVector : Vector3.zero;
+                }
+
+                lateralVelocity = Vector3.ClampMagnitude(lateralVelocity, maxSpeed);
+            }
+
+            else
+            {
+                Vector3 targetAirVelocity = movementDirection * maxSpeed;
+                lateralVelocity = Vector3.Lerp(lateralVelocity,targetAirVelocity, lateralAcceleration * Time.deltaTime);
+            }
+
+            _chachedLateralVelocity = lateralVelocity;
+
+             
+          Vector3 finalVelocity = new Vector3(lateralVelocity.x,_verticalVelocity,lateralVelocity.z);
+
+          
+            ApplyLedgeAssist();
+           _characterController.Move(finalVelocity * Time.deltaTime);
+       }
+
+        private void ApplyLedgeAssist()
+        {
+            if(_isGrounded || ledgeAssistTimer<=0f || _ledgeAssistUsed || _isKnockbackActive)
+                return;
+            
+            
+            float capsuleRadius = _characterController.radius *0.95f;
+            float capsuleHeight = _characterController.height;
+
+            Vector3 bottom = transform.position + _characterController.center + Vector3.up * capsuleRadius;
+            Vector3 top = bottom + Vector3.up * (capsuleHeight - capsuleRadius *2f);
+
+            Vector3 forward = transform.forward;
+
+            if(!Physics.CapsuleCast(bottom , top , capsuleRadius , forward , out RaycastHit wallHit , capsuleRadius +0.05f, _groundLayers , QueryTriggerInteraction.Ignore))
+                return;
+            
+            Vector3 stepUpStart = wallHit.point + Vector3.up * capsuleHeight * 0.4f;
+
+            bool blockedAbove = Physics.Raycast(
+              stepUpStart,
+              Vector3.up,
+              out _,
+              0.4f,
+              _groundLayers,
+              QueryTriggerInteraction.Ignore
+            );
+
+            if (blockedAbove) return;
+
+            _characterController.Move(Vector3.up * 0.35f);
+            _ledgeAssistUsed = true;
         }
 
-        private Vector3 HandleSteepWalls(Vector3 velocity){
-             Vector3 normal = PlayerControlUtils.GetNormalWithSphereCast(_characterController, _groundLayers);
-             float angle = Vector3.Angle(normal, Vector3.up);
-             bool validAngle = angle <= _characterController.slopeLimit;
-             if(!validAngle && _verticalVelocity <0){
-                velocity = Vector3.ProjectOnPlane(normal , velocity);
-             }
+        public void ApplyKnockback(HitInfo hitInfo)
+        {
+            hitInfo.Direction.y = 0f;
+            hitInfo.Direction.Normalize();
 
-             return velocity;
+            _knockbackVelocity = hitInfo.Direction * hitInfo.Force;
+            _knockbackTimer = hitInfo.Duration;
+            _isKnockbackActive = true;
+
+            ResetLateralVelocity();
+            _playerState.ClearPlayerActionState();
         }
 
-        private bool IsMoveLaterally(){
-           Vector3 lateralVelocity = new Vector3(_characterController.velocity.x ,0f , _characterController.velocity.z);
+        private bool IsGrounded(out Vector3 groundNormal, out float slopeAngle){
 
-           return lateralVelocity.magnitude >movingThreshold ;  
-        }
+            groundNormal = Vector3.up;
+            slopeAngle = 0f;
 
-        private bool IsGrounded(){
-            bool grounded = _playerState.InGroundedState() ? IsGroundedWhileGrounded() : IsGroundedWhileAirborne();
-            return grounded;
-        }
+            bool grounded = PlayerControlUtils.CheckGrounded(_characterController , out groundNormal);
 
-        private bool IsGroundedWhileGrounded(){
-            Vector3 spherePosition = new Vector3(transform.position.x , transform.position.y - _characterController.radius , transform.position.z);
-            bool grounded = Physics.CheckSphere(spherePosition , _characterController.radius , _groundLayers , QueryTriggerInteraction.Ignore);
-            return grounded;
-        }
+           if(!grounded) return false;
 
-        private bool IsGroundedWhileAirborne(){
-            Vector3 normal = PlayerControlUtils.GetNormalWithSphereCast(_characterController, _groundLayers);
-             float angle = Vector3.Angle(normal, Vector3.up);
-             bool validAngle = angle <= _characterController.slopeLimit;
-             print(angle);
-            return _characterController.isGrounded && validAngle;
-        }
+           slopeAngle = Vector3.Angle(groundNormal , Vector3.up);
 
+           if(slopeAngle <= _characterController.slopeLimit){
+            return true;
+           }
+
+           if(_verticalVelocity <=0f){
+            return true;
+           }
+
+           return false;
+      }
         private void LateUpdate()
         {
             UpdateCameraRotation();
@@ -253,6 +398,11 @@ namespace PrabuddhaSingh.FinalCharachterController{
 
         private bool CanRun(){
             return _playerLocomotionInput.MovementInput.y >= Mathf.Abs(_playerLocomotionInput.MovementInput.x);
+        }
+
+        public void ResetLateralVelocity()
+        {
+            _chachedLateralVelocity = Vector3.zero;
         }
 }
 }

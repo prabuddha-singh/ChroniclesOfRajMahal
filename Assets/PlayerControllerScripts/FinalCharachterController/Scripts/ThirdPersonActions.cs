@@ -31,7 +31,6 @@ namespace PrabuddhaSingh.FinalCharachterController{
             return;
            }
            Vector2 scrollInput = context.ReadValue<Vector2>();
-           Debug.Log(scrollInput);
         }
     }
 }

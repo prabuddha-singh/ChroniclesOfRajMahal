@@ -13,17 +13,41 @@ namespace PrabuddhaSingh.FinalCharachterController{
     falling=5,
     strafing =6,
    }
+
+   public enum PlayerActionStates
+    {
+        None = 0,
+        Attacking = 1,
+        Gathering  = 2,
+    }
     public class PlayerState : MonoBehaviour
 {
     [field:SerializeField] public PlayerMovementState CurrentPlayerMovementState { get; private set; } = PlayerMovementState.Idling;
-
+    [field:SerializeField] public PlayerActionStates CurrentPlayerActionState { get; private set; } = PlayerActionStates.None;
     public void SetPlayerMovementState(PlayerMovementState playerMovementState){
          CurrentPlayerMovementState = playerMovementState;
+    }
+
+    public void SetPlayerActionState(PlayerActionStates playerActionState){
+        CurrentPlayerActionState = playerActionState;
+    }
+
+    public void ClearPlayerActionState(){
+        CurrentPlayerActionState = PlayerActionStates.None;
+    }
+
+    public bool IsPlayingAction(){
+        return CurrentPlayerActionState != PlayerActionStates.None;
     }
 
     public bool InGroundedState(){
         return IsStateGroundedState(CurrentPlayerMovementState);
     }
+
+    public bool BlocksMovement()
+        {
+            return CurrentPlayerActionState == PlayerActionStates.Gathering;
+        }
 
     public bool IsStateGroundedState(PlayerMovementState movementState){
             return movementState == PlayerMovementState.running || 
