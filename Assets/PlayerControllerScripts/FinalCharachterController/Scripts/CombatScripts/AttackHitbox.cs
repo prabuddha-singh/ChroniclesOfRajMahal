@@ -88,7 +88,7 @@ namespace PrabuddhaSingh.FinalCharachterController
             }
             if(CameraShake.Instance != null)
             {
-                CameraShake.Instance.Shake(0.35f, 0.45f);
+                CameraShake.Instance.Shake(0.35f, 1.50f);
             }
             else
             {

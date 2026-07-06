@@ -17,7 +17,7 @@ namespace PrabuddhaSingh.FinalCharachterController{
     
 
      // locomotion hashes 
-        private static int inputHashX = Animator.StringToHash("InputX");
+    private static int inputHashX = Animator.StringToHash("InputX");
     private static int inputHashY = Animator.StringToHash("InputY");
     private static int inputMagnitudeHash = Animator.StringToHash("inputMagnitude");
     private static int isGroundedHash = Animator.StringToHash("isGrounded");
