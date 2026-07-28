@@ -7,7 +7,7 @@ namespace PrabuddhaSingh.FinalCharachterController
    [SerializeField] private int maxCombo = 2;
    [SerializeField] private float maxAttackGap = 1.2f;
 
-   private int CurrentComboIndex;
+   public int CurrentComboIndex { get; private set; }
    private bool canRecieveInput;
    private bool inputBuffered;
    private float lastAttacktime;
@@ -93,12 +93,16 @@ namespace PrabuddhaSingh.FinalCharachterController
 
     public void ResetCombo()
     {
+        ResetCombatState();
+        _playerState.ClearPlayerActionState(); 
+    }
+
+    public void ResetCombatState(){
         CurrentComboIndex = 0;
         inputBuffered = false;
         canRecieveInput = true;  
 
-        _animator.SetInteger("AttackIndex", 0);
-        _playerState.ClearPlayerActionState(); 
+        _animator.SetInteger("AttackIndex", 0);    
     }
 }  
 }

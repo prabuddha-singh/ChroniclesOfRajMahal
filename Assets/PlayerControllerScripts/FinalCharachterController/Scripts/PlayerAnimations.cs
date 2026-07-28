@@ -33,12 +33,14 @@ namespace PrabuddhaSingh.FinalCharachterController{
     private static int isAttackingHash = Animator.StringToHash("isAttacking");
     private static int isGatheringHash = Animator.StringToHash("isGathering");
     private static int isPlayingActionHash = Animator.StringToHash("isPLayingAction");
+    
+    private static int isHitHash = Animator.StringToHash("isHit");
     private int[] actionHashes;
     
 
     // camera hashes 
 
-        private static int rotationMismatchHash = Animator.StringToHash("RotationMismatch");
+    private static int rotationMismatchHash = Animator.StringToHash("RotationMismatch");
     private static int isRotatingToTargetHash = Animator.StringToHash("isRotatingToTarget");
 
     private float _sprintMaxBlendValue = 1.5f;
@@ -54,11 +56,12 @@ namespace PrabuddhaSingh.FinalCharachterController{
             _playerController = GetComponent<PlayerController>();
             _playerInputActions = GetComponentInParent<PlayerInputActions>();
 
-            actionHashes = new int[] { isGatheringHash , isAttackingHash};
+            actionHashes = new int[] { isGatheringHash , isAttackingHash , isHitHash};
         }
 
         void Update(){
             UpdateAnimationState();
+            Debug.Log(_playerState.CurrentPlayerActionState);
         }
 
         private void UpdateAnimationState()
@@ -93,6 +96,7 @@ namespace PrabuddhaSingh.FinalCharachterController{
             _animator.SetBool(isRotatingToTargetHash, _playerController.IsRotatingToTarget);
             _animator.SetBool(isGatheringHash, _playerInputActions.GatherPressed);
             _animator.SetBool(isAttackingHash, _playerState.CurrentPlayerActionState == PlayerActionStates.Attacking);
+            _animator.SetBool(isHitHash , _playerState.CurrentPlayerActionState == PlayerActionStates.Hit);
             _animator.SetBool(isPlayingActionHash, isPLayingAction);
             _animator.SetFloat(verticalVelocityHash, animVelocity);
             _animator.SetBool(isInJumpAnimHash, _playerController.IsInJumpAnim);

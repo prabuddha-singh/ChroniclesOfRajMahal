@@ -312,7 +312,7 @@ namespace PrabuddhaSingh.FinalCharachterController{
             _isKnockbackActive = true;
 
             ResetLateralVelocity();
-            _playerState.ClearPlayerActionState();
+            _playerState.SetPlayerActionState(PlayerActionStates.Hit);
         }
 
         private bool IsGrounded(out Vector3 groundNormal, out float slopeAngle){

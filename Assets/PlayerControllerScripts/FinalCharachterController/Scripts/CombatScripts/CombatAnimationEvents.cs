@@ -72,6 +72,11 @@ namespace PrabuddhaSingh.FinalCharachterController
 
             playerState.SetPlayerActionState(PlayerActionStates.None);
         }
+
+        public void OnHitAnimationFinished()
+        {
+            playerState.ClearPlayerActionState();
+        }
 }
 }
 
