@@ -14,10 +14,7 @@ namespace PrabuddhaSingh.FinalCharachterController
            return;
         }
 
-        if(combat.CurrentComboIndex <= attackIndex)
-        {
-           combat.ResetCombatState();     
-        }
+        combat.CleanupAfterAttackExit(attackIndex);
     }
     
 } 

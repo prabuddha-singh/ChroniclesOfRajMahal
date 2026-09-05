@@ -3,108 +3,152 @@ using UnityEngine;
 
 namespace PrabuddhaSingh.FinalCharachterController
 {
-  public class PlayerCombat : MonoBehaviour{
-   [SerializeField] private int maxCombo = 2;
-   [SerializeField] private float maxAttackGap = 1.2f;
-
-   public int CurrentComboIndex { get; private set; }
-   private bool canRecieveInput;
-   private bool inputBuffered;
-   private float lastAttacktime;
-
-   private PlayerState _playerState;
-   private Animator _animator;
-
-
-    private void Awake()
+    public class PlayerCombat : MonoBehaviour
     {
-        _playerState = GetComponent<PlayerState>();
-        _animator = GetComponent<Animator>();
-        canRecieveInput = true;
-    }
+        [SerializeField] private int maxCombo = 2;
+        [SerializeField] private float maxAttackGap = 1.2f;
 
-    private void Update()
+        public int CurrentComboIndex { get; private set; }
+        private bool canReceiveInput;
+        private bool inputBuffered;
+        private float lastAttacktime;
+
+        private PlayerState _playerState;
+        private Animator _animator;
+        private PlayerCombatAudio _playerCombatAudio;
+        private AttackHitbox attackHitbox;
+
+
+        private void Awake()
         {
-            if(_playerState.CurrentPlayerActionState == PlayerActionStates.Attacking)
+            _playerState = GetComponent<PlayerState>();
+            _animator = GetComponent<Animator>();
+            _playerCombatAudio = GetComponent<PlayerCombatAudio>();
+            attackHitbox = GetComponentInChildren<AttackHitbox>();
+            canReceiveInput = true;
+        }
+
+        private void Update()
+        {
+            if (_playerState.CurrentPlayerActionState == PlayerActionStates.Attacking)
             {
-                if(Time.time > lastAttacktime + maxAttackGap)
+                if (Time.time > lastAttacktime + maxAttackGap)
                 {
-                    Debug.Log("failsafe triggered");
                     ResetCombo();
                 }
             }
         }
 
-    public void HandleActionInput(){
-
-        if(_playerState.IsPlayingAction() && CurrentComboIndex >= maxCombo)
+        private void OnEnable()
         {
-           inputBuffered = false;
-           return;
+            if(attackHitbox != null)
+            {
+                Debug.Log("Subscribing to OnHit event");
+                attackHitbox.OnHit += HandleAttackImpactSound;
+            }
         }
 
-        if(_playerState.IsPlayingAction() && !canRecieveInput)
+        private void OnDisable()
         {
-           inputBuffered = true;
-           return;     
+            if(attackHitbox != null)
+            {
+                Debug.Log("Unsubscribing from OnHit event");
+                attackHitbox.OnHit -= HandleAttackImpactSound;
+            }
         }
 
-        if (canRecieveInput)
+        private void HandleAttackImpactSound()
         {
-            StartNextAttack();
-        }
-        else
-        {
-            inputBuffered = true;
-        }      
-    }
-
-    private void StartNextAttack(){
-
-       if(CurrentComboIndex >= maxCombo)
-       {
-           inputBuffered = false;
-           return;
-       }
-
-       lastAttacktime = Time.time;
-       canRecieveInput = false;
-       inputBuffered = false;
-
-       CurrentComboIndex++;
-       _animator.SetInteger("AttackIndex", CurrentComboIndex);
-       _playerState.SetPlayerActionState(PlayerActionStates.Attacking);    
-    }
-
-    public void OpenComboWindow()
-    {
-        canRecieveInput = true;
-        if(inputBuffered)
-        {
-            StartNextAttack();
+            Debug.Log("Impact sound triggered");
+           _playerCombatAudio.PlayImpactSFX(CurrentComboIndex);
         }
 
-    }
+        public void HandleActionInput()
+        {
 
-    public void CloseComboWindow()
-    {
-        canRecieveInput = false;
-    }
+            if (_playerState.IsPlayingAction() && CurrentComboIndex >= maxCombo)
+            {
+                inputBuffered = false;
+                return;
+            }
 
-    public void ResetCombo()
-    {
-        ResetCombatState();
-        _playerState.ClearPlayerActionState(); 
-    }
+            if (_playerState.IsPlayingAction() && !canReceiveInput)
+            {
+                inputBuffered = true;
+                return;
+            }
 
-    public void ResetCombatState(){
-        CurrentComboIndex = 0;
-        inputBuffered = false;
-        canRecieveInput = true;  
+            if (canReceiveInput)
+            {
+                StartNextAttack();
+            }
+            else
+            {
+                inputBuffered = true;
+            }
+        }
 
-        _animator.SetInteger("AttackIndex", 0);    
+        private void StartNextAttack()
+        {
+
+            if (CurrentComboIndex >= maxCombo)
+            {
+                inputBuffered = false;
+                return;
+            }
+
+            lastAttacktime = Time.time;
+            canReceiveInput = false;
+            inputBuffered = false;
+
+            CurrentComboIndex++;
+            _animator.SetInteger("AttackIndex", CurrentComboIndex);
+            _playerState.SetPlayerActionState(PlayerActionStates.Attacking);
+        }
+
+        public void OpenComboWindow()
+        {
+            canReceiveInput = true;
+            if (inputBuffered)
+            {
+                StartNextAttack();
+            }
+
+        }
+
+        public void CloseComboWindow()
+        {
+            canReceiveInput = false;
+        }
+
+        public void ResetCombo()
+        {
+            ResetCombatState();
+            _playerState.ClearPlayerActionState();
+        }
+
+        public void CleanupAfterAttackExit(int attackIndex)
+        {
+            if (CurrentComboIndex > attackIndex)
+            {
+                return;
+            }
+
+            ResetCombatState();
+
+            if (_playerState.CurrentPlayerActionState == PlayerActionStates.Attacking)
+            {
+                _playerState.ClearPlayerActionState();
+            }
+        }
+
+        public void ResetCombatState()
+        {
+            CurrentComboIndex = 0;
+            inputBuffered = false;
+            canReceiveInput = true;
+
+            _animator.SetInteger("AttackIndex", 0);
+        }
     }
-}  
 }
-
-

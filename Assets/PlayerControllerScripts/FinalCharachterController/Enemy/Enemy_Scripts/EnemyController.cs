@@ -19,6 +19,10 @@ namespace PrabuddhaSingh.FinalCharachterController
         [SerializeField] public EnemyState _currentState;
         [SerializeField] private NavMeshAgent _agent;
         [SerializeField] private Transform _player;
+        [SerializeField] private EnemyAudioController _enemyAudioController;
+        [SerializeField] private EnemyAttackHitbox _enemyAttackHitBox;
+        [SerializeField] private WaveManager _waveManager;
+
 
         [Header("Utility variables")]
         [SerializeField] private float _distance = 1f;
@@ -26,6 +30,8 @@ namespace PrabuddhaSingh.FinalCharachterController
         [SerializeField] private float _detectionRange = 9f;
         [SerializeField] private float _attackRange = 1.67f;//Six Seveeeeen
         [SerializeField] private float _attackCooldown = 0.6f;
+        [SerializeField] private float _stoppingDistance =1.2f;
+        [SerializeField] private int _avoidancePriority = 50;
         private float attackTimer;
 
         private bool _isDead = false;
@@ -35,6 +41,10 @@ namespace PrabuddhaSingh.FinalCharachterController
         {
             _agent = GetComponent<NavMeshAgent>();
             _player = GameObject.FindGameObjectWithTag("Player").transform;
+            _enemyAudioController = GetComponent<EnemyAudioController>();
+            _enemyAttackHitBox = GetComponentInChildren<EnemyAttackHitbox>();
+            _agent.stoppingDistance = _stoppingDistance;
+            _agent.avoidancePriority = _avoidancePriority;
         }
 
         private void Start()
@@ -106,6 +116,8 @@ namespace PrabuddhaSingh.FinalCharachterController
             if (newState == EnemyState.Dead)
             {
                 _isDead = true;
+
+                _waveManager?.EnemyDead();
             }
         }
 
@@ -138,10 +150,11 @@ namespace PrabuddhaSingh.FinalCharachterController
         {
             //FacePlayer();
             _agent.isStopped = false;
-            if (_agent.destination != _player.position)
+            if(_agent.stoppingDistance != _stoppingDistance)
             {
-                _agent.SetDestination(_player.position);
+                _agent.stoppingDistance = _stoppingDistance;
             }
+            _agent.SetDestination(_player.position);
         }
 
         private void AttackState()
@@ -164,9 +177,35 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         public void OnAttackFinished()
         {
-            
-                ChangeState(EnemyState.Chase);
-            
+
+            ChangeState(EnemyState.Chase);
+
+        }
+
+        public void OnEnable()
+        {
+            if (_enemyAttackHitBox != null)
+            {
+                _enemyAttackHitBox.OnPlayerHit += HandleEnemyAttackImpactSound;
+            }
+        }
+
+        public void OnDisable()
+        {
+            if (_enemyAttackHitBox != null)
+            {
+                _enemyAttackHitBox.OnPlayerHit -= HandleEnemyAttackImpactSound;
+            }
+        }
+
+        private void HandleEnemyAttackImpactSound()
+        {
+            _enemyAudioController.PlayImpactSFX();
+        }
+
+        public void SetWaveManager(WaveManager waveManager)
+        {
+            _waveManager = waveManager;
         }
 
     }

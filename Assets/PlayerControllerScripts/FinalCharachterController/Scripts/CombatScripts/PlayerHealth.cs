@@ -1,42 +1,73 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 namespace PrabuddhaSingh.FinalCharachterController
 {
-    public class PlayerHealth : MonoBehaviour , IDamageable
-{
-    [SerializeField] private float maxHealth = 100f;
-    [SerializeField] private float currentHealth;
-    [SerializeField] private PlayerState _playerState;
-    [SerializeField] private PlayerCombat _playerCombat;
-
-    private void Awake()
+    public class PlayerHealth : MonoBehaviour, IDamageable
     {
-        currentHealth = maxHealth;
-        _playerState = GetComponent<PlayerState>();
-        _playerCombat = GetComponent<PlayerCombat>();
-    }
+        public event Action<int, int> OnHealthChanged;
+        [SerializeField] private float maxHealth = 100f;
+        [SerializeField] private float currentHealth;
+        [SerializeField] private float hitRecoveryDuration = 1.1f;
+        [SerializeField] private PlayerState _playerState;
+        [SerializeField] private PlayerCombat _playerCombat;
+        private Coroutine hitRecoveryRoutine;
 
-    public void TakeDamage(float damage)
-    {
-        _playerCombat.ResetCombo();
-        PlayHitAnimation();
-        currentHealth -= damage;
-        Debug.Log($"Player took {damage} damage. Current health: {currentHealth}");
-        if (currentHealth <= 0)
+        private void Awake()
         {
-            Die();
+            currentHealth = maxHealth;
+            _playerState = GetComponent<PlayerState>();
+            _playerCombat = GetComponent<PlayerCombat>();
+        }
+
+        private void Start()
+        {
+           OnHealthChanged?.Invoke((int)currentHealth,(int)maxHealth);
+        }
+
+        public void TakeDamage(float damage)
+        {
+            _playerCombat.ResetCombo();
+            PlayHitAnimation();
+            currentHealth -= damage;
+            currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+            OnHealthChanged?.Invoke((int)currentHealth, (int)maxHealth);
+            if (currentHealth <= 0)
+            {
+                Die();
+            }
+        }
+
+        public void PlayHitAnimation()
+        {
+            _playerState.SetPlayerActionState(PlayerActionStates.Hit);
+
+            if(hitRecoveryRoutine != null)
+            {
+                StopCoroutine(hitRecoveryRoutine);
+            }
+
+            hitRecoveryRoutine = StartCoroutine(ClearHitStateAfterDelay());
+        }
+
+        private IEnumerator ClearHitStateAfterDelay()
+        {
+            yield return new WaitForSeconds(hitRecoveryDuration);
+            ClearHitState();
+            hitRecoveryRoutine = null;
+        }
+
+        public void ClearHitState()
+        {
+            if(_playerState.CurrentPlayerActionState == PlayerActionStates.Hit)
+            {
+                _playerState.ClearPlayerActionState();
+            }
+        }
+
+        private void Die()
+        {
         }
     }
-
-    public void PlayHitAnimation(){
-        _playerState.SetPlayerActionState(PlayerActionStates.Hit); 
-        Debug.Log(_playerState.CurrentPlayerActionState);  
-    }
-
-    private void Die()
-    {
-        Debug.Log("Player has died.");
-    }
-}
 }

@@ -3,35 +3,41 @@ using UnityEngine;
 
 namespace PrabuddhaSingh.FinalCharachterController
 {
-    public class CombatAnimationEvents : MonoBehaviour{
-      [SerializeField] private AttackHitbox leftFist;
-      [SerializeField] private AttackHitbox rightFist;
-      [SerializeField] private PlayerState playerState;
-      [SerializeField] private PlayerCombat playerCombat;
+    public class CombatAnimationEvents : MonoBehaviour
+    {
+        [SerializeField] private AttackHitbox leftFist;
+        [SerializeField] private AttackHitbox rightFist;
+        [SerializeField] private PlayerState playerState;
+        [SerializeField] private PlayerCombat playerCombat;
+        [SerializeField] private PlayerHealth playerHealth;
 
-      private void Awake()
-      {
-          if(playerState == null)
-          {
-              playerState = GetComponentInParent<PlayerState>();
-          }
-
-          if(playerCombat == null)
-          {
-              playerCombat = GetComponentInParent<PlayerCombat>();
-          }
-      }
-
-      public void EnableRightPunch()
+        private void Awake()
         {
-            if(rightFist != null)
+            if (playerState == null)
+            {
+                playerState = GetComponentInParent<PlayerState>();
+            }
+
+            if (playerCombat == null)
+            {
+                playerCombat = GetComponentInParent<PlayerCombat>();
+            }
+            if (playerHealth == null)
+            {
+                playerHealth = GetComponentInParent<PlayerHealth>();
+            }
+        }
+
+        public void EnableRightPunch()
+        {
+            if (rightFist != null)
             {
                 rightFist.EnableHitbox();
             }
         }
         public void DisableRightPunch()
         {
-            if(rightFist != null)
+            if (rightFist != null)
             {
                 rightFist.DisableHitbox();
             }
@@ -39,14 +45,14 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         public void EnableLeftPunch()
         {
-            if(leftFist != null)
+            if (leftFist != null)
             {
                 leftFist.EnableHitbox();
             }
         }
         public void DisableLeftPunch()
         {
-            if(leftFist != null)
+            if (leftFist != null)
             {
                 leftFist.DisableHitbox();
             }
@@ -54,17 +60,17 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         public void FinishAttack()
         {
-            if(leftFist != null)
+            if (leftFist != null)
             {
                 leftFist.DisableHitbox();
             }
 
-            if(rightFist != null)
+            if (rightFist != null)
             {
                 rightFist.DisableHitbox();
             }
 
-            if(playerCombat != null)
+            if (playerCombat != null)
             {
                 playerCombat.ResetCombo();
                 return;
@@ -75,8 +81,8 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         public void OnHitAnimationFinished()
         {
-            playerState.ClearPlayerActionState();
+            playerHealth.ClearHitState();
         }
-}
+    }
 }
 

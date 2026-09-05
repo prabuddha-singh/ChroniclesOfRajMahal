@@ -1,5 +1,7 @@
+using Cinemachine;
 using UnityEngine;
 using System.Collections;
+
 
 namespace PrabuddhaSingh.FinalCharachterController
 {

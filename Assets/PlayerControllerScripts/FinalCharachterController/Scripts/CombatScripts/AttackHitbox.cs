@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 namespace PrabuddhaSingh.FinalCharachterController
 {
@@ -11,7 +12,7 @@ namespace PrabuddhaSingh.FinalCharachterController
     [SerializeField] private float hitEffectLifetime = 1f;
     private bool _hasHit;
     private PlayerState _playerState;
-
+    public event Action OnHit;
     private HashSet<GameObject> hitTargets = new HashSet<GameObject>();
 
     private void Awake()
@@ -60,7 +61,8 @@ namespace PrabuddhaSingh.FinalCharachterController
             {
                 _hasHit = true;
                 damageable.TakeDamage(10);
-                Debug.Log("Dealt damage to " + other.name); 
+                Debug.Log("Hit confirmed");
+                OnHit?.Invoke();
             }
 
             if(other.TryGetComponent<IKnockbackable>(out var knockbackable))
@@ -82,17 +84,10 @@ namespace PrabuddhaSingh.FinalCharachterController
             {
                 HitStopManager.instance.DoHitStop(0.08f);
             }
-            else
-            {
-                Debug.Log("no trigger(hitstop)");
-            }
+
             if(CameraShake.Instance != null)
             {
-                CameraShake.Instance.Shake(0.35f, 1.50f);
-            }
-            else
-            {
-                Debug.Log("no trigger(camerashake)");
+                CameraShake.Instance.Shake(0.35f, 2.2f);
             }
         }
 

@@ -41,7 +41,7 @@ namespace PrabuddhaSingh.FinalCharachterController
 
             if (PlayerInputManager.Instance?.PlayerControls == null)
             {
-                Debug.LogError("Cannot diable Player Controls");
+                Debug.LogError("Cannot disable Player Controls");
                 return;
             }
 
