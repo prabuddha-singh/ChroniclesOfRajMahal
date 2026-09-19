@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 
 namespace PrabuddhaSingh.FinalCharachterController
@@ -9,6 +10,8 @@ namespace PrabuddhaSingh.FinalCharachterController
         [SerializeField] private float maxAttackGap = 1.2f;
 
         public int CurrentComboIndex { get; private set; }
+
+        public event Action OnChargedAtatckRequested;
         private bool canReceiveInput;
         private bool inputBuffered;
         private float lastAttacktime;
@@ -17,6 +20,7 @@ namespace PrabuddhaSingh.FinalCharachterController
         private Animator _animator;
         private PlayerCombatAudio _playerCombatAudio;
         private AttackHitbox attackHitbox;
+        private ManaController _manaController;
 
 
         private void Awake()
@@ -25,6 +29,7 @@ namespace PrabuddhaSingh.FinalCharachterController
             _animator = GetComponent<Animator>();
             _playerCombatAudio = GetComponent<PlayerCombatAudio>();
             attackHitbox = GetComponentInChildren<AttackHitbox>();
+            _manaController = GetComponent<ManaController>();
             canReceiveInput = true;
         }
 
@@ -86,6 +91,24 @@ namespace PrabuddhaSingh.FinalCharachterController
             {
                 inputBuffered = true;
             }
+        }
+
+        public void HandleChargedAttackInput()
+        {
+            if (_playerState.IsPlayingAction())
+            {
+                return;
+            }  
+
+            if (!_manaController.IsFull)
+            {
+                return;
+            }
+
+            _manaController.ConsumeMana();
+            _playerState.SetPlayerActionState(PlayerActionStates.Charging);
+
+            OnChargedAtatckRequested?.Invoke();
         }
 
         private void StartNextAttack()

@@ -10,6 +10,7 @@ namespace PrabuddhaSingh.FinalCharachterController
         [SerializeField] private PlayerState playerState;
         [SerializeField] private PlayerCombat playerCombat;
         [SerializeField] private PlayerHealth playerHealth;
+        [SerializeField] private EnergyBlast energyBlast;
 
         private void Awake()
         {
@@ -25,6 +26,10 @@ namespace PrabuddhaSingh.FinalCharachterController
             if (playerHealth == null)
             {
                 playerHealth = GetComponentInParent<PlayerHealth>();
+            }
+            if(energyBlast == null)
+            {
+                energyBlast = GetComponentInParent<EnergyBlast>();
             }
         }
 
@@ -82,6 +87,17 @@ namespace PrabuddhaSingh.FinalCharachterController
         public void OnHitAnimationFinished()
         {
             playerHealth.ClearHitState();
+        }
+
+        public void FinishChargedAttack()
+        {
+            playerState.ClearPlayerActionState();
+            Debug.Log("Charged Attack Finished");
+        }
+
+        public void DoChargedAttack()
+        {
+            energyBlast.ExecuteBlast();
         }
     }
 }

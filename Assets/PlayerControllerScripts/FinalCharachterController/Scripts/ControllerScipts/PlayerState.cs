@@ -22,6 +22,7 @@ namespace PrabuddhaSingh.FinalCharachterController
         Attacking = 1,
         Gathering = 2,
         Hit = 3,
+        Charging=4,
     }
     public class PlayerState : MonoBehaviour
     {
@@ -54,7 +55,7 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         public bool BlocksMovement()
         {
-            return CurrentPlayerActionState == PlayerActionStates.Gathering;
+            return CurrentPlayerActionState == PlayerActionStates.Gathering || CurrentPlayerActionState == PlayerActionStates.Charging;
         }
 
         public bool IsStateGroundedState(PlayerMovementState movementState)

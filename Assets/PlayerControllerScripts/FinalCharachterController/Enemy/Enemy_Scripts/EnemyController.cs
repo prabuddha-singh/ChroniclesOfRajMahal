@@ -208,5 +208,10 @@ namespace PrabuddhaSingh.FinalCharachterController
             _waveManager = waveManager;
         }
 
+        public bool IsDead()
+        {
+            return _isDead;
+        }
+
     }
 }

@@ -90,6 +90,16 @@ namespace PrabuddhaSingh.FinalCharachterController
 
             GatherPressed= true;
         }
+
+        public void OnChargedAttack(InputAction.CallbackContext context)
+        {
+            if (!context.performed)
+            {
+                return;
+            } 
+
+            _playerCombat.HandleChargedAttackInput();
+        }
     }
 
 }

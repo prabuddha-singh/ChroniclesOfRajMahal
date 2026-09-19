@@ -463,7 +463,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a6454eaed813cb46af755b3829eae8d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 20
+  maxHealth: 40
   hitLockDuration: 0.6
   _enemyController: {fileID: 0}
 --- !u!136 &6786953557978958319
