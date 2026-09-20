@@ -23,14 +23,17 @@ namespace PrabuddhaSingh.FinalCharachterController
     
     public void DoHitStop(float Duration)
     {
-        if( hitStopRoutine != null ) StopCoroutine(hitStopRoutine);
+        if( hitStopRoutine != null)
+        {
+            StopCoroutine(hitStopRoutine);
+            Time.timeScale = 1f; 
+        } 
 
         hitStopRoutine = StartCoroutine(HitStopCoroutine(Duration));
     }
      
     private IEnumerator HitStopCoroutine(float Duration)
     {
-        float originalTimeScale = Time.timeScale;
         Time.timeScale = 0f;
 
         float elapsedTime = 0f; 
@@ -41,7 +44,7 @@ namespace PrabuddhaSingh.FinalCharachterController
           yield return null;      
         }
         
-        Time.timeScale = originalTimeScale;
+        Time.timeScale = 1f;
         hitStopRoutine = null;
     } 
 }

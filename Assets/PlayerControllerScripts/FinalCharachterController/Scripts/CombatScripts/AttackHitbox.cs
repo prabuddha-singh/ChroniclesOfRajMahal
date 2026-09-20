@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 namespace PrabuddhaSingh.FinalCharachterController
 {
@@ -9,9 +10,11 @@ namespace PrabuddhaSingh.FinalCharachterController
     [SerializeField] private float knockbackDuration = 0.15f;
     [SerializeField] private GameObject hitEffectPrefab;
     [SerializeField] private float hitEffectLifetime = 1f;
+    [SerializeField] private float manaGainPerHit = 10f;
     private bool _hasHit;
     private PlayerState _playerState;
-
+    private ManaController _manaController;
+    public event Action OnHit;
     private HashSet<GameObject> hitTargets = new HashSet<GameObject>();
 
     private void Awake()
@@ -19,6 +22,7 @@ namespace PrabuddhaSingh.FinalCharachterController
         _collider = GetComponent<Collider>();
         _playerState = GetComponentInParent<PlayerState>();
         _collider.enabled = false;
+        _manaController = GetComponentInParent<ManaController>();
     }
 
     public void EnableHitbox()
@@ -60,7 +64,9 @@ namespace PrabuddhaSingh.FinalCharachterController
             {
                 _hasHit = true;
                 damageable.TakeDamage(10);
-                Debug.Log("Dealt damage to " + other.name); 
+                _manaController.AddMana(manaGainPerHit);
+                Debug.Log("Hit confirmed");
+                OnHit?.Invoke();
             }
 
             if(other.TryGetComponent<IKnockbackable>(out var knockbackable))
@@ -82,17 +88,10 @@ namespace PrabuddhaSingh.FinalCharachterController
             {
                 HitStopManager.instance.DoHitStop(0.08f);
             }
-            else
-            {
-                Debug.Log("no trigger(hitstop)");
-            }
+
             if(CameraShake.Instance != null)
             {
-                CameraShake.Instance.Shake(0.35f, 0.45f);
-            }
-            else
-            {
-                Debug.Log("no trigger(camerashake)");
+                CameraShake.Instance.Shake(0.35f, 2.2f);
             }
         }
 
