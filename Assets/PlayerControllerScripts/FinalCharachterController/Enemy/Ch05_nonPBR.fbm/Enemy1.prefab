@@ -67,7 +67,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PrabuddhaSingh.FinalCharachterController.EnemyAttackHitbox
   _collider: {fileID: 4554349366733931975}
-  knockbackForce: 6
+  knockbackForce: 12
   knockbackDuration: 0.15
   hitEffectPrefab: {fileID: 362261158077530393, guid: 20fda529c996a334da7fd65b48ea40df, type: 3}
   hitEffectLifetime: 1
@@ -571,9 +571,9 @@ MonoBehaviour:
   _waveManager: {fileID: 0}
   _distance: 1
   _rotationSpeed: 10
-  _detectionRange: 15
-  _attackRange: 1
-  _attackCooldown: 3
+  _detectionRange: 25
+  _attackRange: 1.67
+  _attackCooldown: 2
   _stoppingDistance: 1.2
   _avoidancePriority: 50
 --- !u!114 &4820946780454523193

@@ -9,6 +9,9 @@ namespace PrabuddhaSingh.FinalCharachterController
         [SerializeField] private float blastDamage = 30f;
         [SerializeField] private float knockbackForce = 9f;
         [SerializeField] private float knockbackDuration = 0.5f;
+        [SerializeField] private float hitStopDuration = 1f;
+        [SerializeField] private float CameraShakeDuration = 0.7f;
+        [SerializeField] private float CameraShakeStrength = 0.7f;
 
 
         public void ExecuteBlast()
@@ -40,6 +43,15 @@ namespace PrabuddhaSingh.FinalCharachterController
                 {
                     continue;
                 }
+            }
+
+            if(HitStopManager.instance != null)
+            {
+                HitStopManager.instance.DoHitStop(hitStopDuration);
+            }
+            if(CameraShake.Instance != null)
+            {
+                CameraShake.Instance.Shake(CameraShakeDuration, CameraShakeStrength);
             }
         }
 
