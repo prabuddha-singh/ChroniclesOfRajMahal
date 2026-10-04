@@ -304,6 +304,8 @@ namespace PrabuddhaSingh.FinalCharachterController{
 
         public void ApplyKnockback(HitInfo hitInfo)
         {
+            if(_playerState.CurrentPlayerActionState == PlayerActionStates.Dead)
+                return;
             hitInfo.Direction.y = 0f;
             hitInfo.Direction.Normalize();
 

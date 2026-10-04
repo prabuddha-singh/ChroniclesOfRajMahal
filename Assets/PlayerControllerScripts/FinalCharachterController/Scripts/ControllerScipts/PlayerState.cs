@@ -22,7 +22,8 @@ namespace PrabuddhaSingh.FinalCharachterController
         Attacking = 1,
         Gathering = 2,
         Hit = 3,
-        Charging=4,
+        Charging = 4,
+        Dead = 5,
     }
     public class PlayerState : MonoBehaviour
     {
@@ -35,11 +36,13 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         public void SetPlayerActionState(PlayerActionStates playerActionState)
         {
+            if(CurrentPlayerActionState == PlayerActionStates.Dead) return;
             CurrentPlayerActionState = playerActionState;
         }
 
         public void ClearPlayerActionState()
         {
+            if(CurrentPlayerActionState == PlayerActionStates.Dead) return;
             CurrentPlayerActionState = PlayerActionStates.None;
         }
 
@@ -55,7 +58,7 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         public bool BlocksMovement()
         {
-            return CurrentPlayerActionState == PlayerActionStates.Gathering || CurrentPlayerActionState == PlayerActionStates.Charging;
+            return CurrentPlayerActionState == PlayerActionStates.Gathering || CurrentPlayerActionState == PlayerActionStates.Charging || CurrentPlayerActionState == PlayerActionStates.Dead;
         }
 
         public bool IsStateGroundedState(PlayerMovementState movementState)

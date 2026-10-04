@@ -37,6 +37,7 @@ namespace PrabuddhaSingh.FinalCharachterController
         private static int isPlayingActionHash = Animator.StringToHash("isPlayingAction");
         private static int isChargingHash = Animator.StringToHash("isCharging");
         private static int isHitHash = Animator.StringToHash("isHit");
+        private static int isDeadHash = Animator.StringToHash("isDead");
         private int[] actionHashes;
 
 
@@ -75,6 +76,7 @@ namespace PrabuddhaSingh.FinalCharachterController
             bool isRunning = _playerState.CurrentPlayerMovementState == PlayerMovementState.running;
             bool isFalling = _playerState.CurrentPlayerMovementState == PlayerMovementState.falling;
             bool isGrounded = _playerController.IsGroundedExpose;
+            bool isDead = _playerState.CurrentPlayerActionState == PlayerActionStates.Dead;
             float animVelocity = Mathf.Clamp(_playerController.VerticalVelocityExpose, 5f, -5f);
             bool isPlayingAction = actionHashes.Any(hash => _animator.GetBool(hash));
 
@@ -104,6 +106,11 @@ namespace PrabuddhaSingh.FinalCharachterController
             _animator.SetFloat(verticalVelocityHash, animVelocity);
             _animator.SetBool(isInJumpAnimHash, _playerController.IsInJumpAnim);
             _animator.SetBool(isChargingHash, _playerState.CurrentPlayerActionState == PlayerActionStates.Charging);
+            _animator.SetBool(isDeadHash, isDead);
+            if (isDead)
+            {
+                Debug.Log("Animator isDead = TRUE");
+            }
 
         }
 
