@@ -16,6 +16,9 @@ namespace PrabuddhaSingh.FinalCharachterController
         [Header("Swing SFX")]
         [SerializeField] private AudioClip swing;
 
+        [Header("Energy Blast SFX")]
+        [SerializeField] private AudioClip energyBlastSFX;
+
         public void PlayPunchSFX()
         {
             AudioSource.PlayOneShot(punch);
@@ -39,6 +42,11 @@ namespace PrabuddhaSingh.FinalCharachterController
         public void PlaySwingSFX()
         {
             AudioSource.PlayOneShot(swing);
+        }
+        
+        public void PlayEneryBlastSFX()
+        {
+            AudioSource.PlayOneShot(energyBlastSFX);
         }
 
     }

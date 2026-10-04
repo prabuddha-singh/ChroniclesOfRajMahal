@@ -107,6 +107,7 @@ namespace PrabuddhaSingh.FinalCharachterController
 
             _manaController.ConsumeMana();
             _playerState.SetPlayerActionState(PlayerActionStates.Charging);
+            _playerCombatAudio.PlayEneryBlastSFX();
 
             OnChargedAtatckRequested?.Invoke();
         }

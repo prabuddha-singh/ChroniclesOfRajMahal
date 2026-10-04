@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 namespace PrabuddhaSingh.FinalCharachterController
 {
@@ -13,6 +14,8 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         public bool IsFull => currentMana >= maxMana;
 
+        public event Action<int, int> OnManaUpdate;
+
         private void Awake()
         {
             currentMana = 0f;
@@ -26,6 +29,7 @@ namespace PrabuddhaSingh.FinalCharachterController
             }
 
             currentMana = Mathf.Clamp(currentMana + amount, 0f, maxMana);
+            OnManaUpdate?.Invoke((int)currentMana, (int)maxMana);
             Debug.Log("Mana added: " + amount + ", Current Mana: " + currentMana);
         }
 
@@ -33,6 +37,7 @@ namespace PrabuddhaSingh.FinalCharachterController
         {
             if(!IsFull) return false;
             currentMana = 0f;
+            OnManaUpdate?.Invoke((int)currentMana, (int)maxMana);
             return true;
         }
     }
