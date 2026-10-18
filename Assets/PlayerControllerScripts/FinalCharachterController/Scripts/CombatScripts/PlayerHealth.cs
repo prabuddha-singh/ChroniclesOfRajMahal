@@ -14,6 +14,8 @@ namespace PrabuddhaSingh.FinalCharachterController
         [SerializeField] private PlayerCombat _playerCombat;
         private Coroutine hitRecoveryRoutine;
         private bool isDead = false;
+        public event Action OnPlayerDeath;
+        public bool isPlayerDead => isDead;
 
         private void Awake()
         {
@@ -78,6 +80,7 @@ namespace PrabuddhaSingh.FinalCharachterController
                 return;
             }
             isDead = true;
+            OnPlayerDeath?.Invoke();
             if (hitRecoveryRoutine != null)
             {
                 StopCoroutine(hitRecoveryRoutine);

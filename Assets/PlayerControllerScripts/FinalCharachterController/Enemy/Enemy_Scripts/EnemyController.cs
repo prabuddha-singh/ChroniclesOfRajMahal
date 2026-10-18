@@ -22,6 +22,7 @@ namespace PrabuddhaSingh.FinalCharachterController
         [SerializeField] private EnemyAudioController _enemyAudioController;
         [SerializeField] private EnemyAttackHitbox _enemyAttackHitBox;
         [SerializeField] private WaveManager _waveManager;
+        [SerializeField] private PlayerHealth _playerHealth;
 
 
         [Header("Utility variables")]
@@ -35,12 +36,15 @@ namespace PrabuddhaSingh.FinalCharachterController
         private float attackTimer;
 
         private bool _isDead = false;
+        private bool _playerisDead = false;
         private float _hitLockTimer;
 
         private void Awake()
         {
             _agent = GetComponent<NavMeshAgent>();
             _player = GameObject.FindGameObjectWithTag("Player").transform;
+            _playerHealth = _player.GetComponent<PlayerHealth>();
+            _playerisDead = _playerHealth.isPlayerDead;
             _enemyAudioController = GetComponent<EnemyAudioController>();
             _enemyAttackHitBox = GetComponentInChildren<EnemyAttackHitbox>();
             _agent.stoppingDistance = _stoppingDistance;
@@ -54,6 +58,7 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         private void Update()
         {
+            if(_playerisDead) return;
             if (attackTimer > 0)
             {
                 attackTimer -= Time.deltaTime;
@@ -109,6 +114,7 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         public void ChangeState(EnemyState newState)
         {
+            if(_playerisDead) return;
             if (_isDead && newState != EnemyState.Dead) return;
             if (_currentState == newState) return;
             _currentState = newState;
@@ -182,11 +188,31 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         }
 
+        private void OnPlayerDied()
+        {
+            _playerisDead = true;
+
+            if(_agent != null && _agent.enabled && _agent.isOnNavMesh)
+            {
+                _agent.isStopped = true;
+                _agent.ResetPath();
+                _agent.velocity = Vector3.zero;
+            }
+
+            ChangeState(EnemyState.Idle);
+
+        }
+
         public void OnEnable()
         {
             if (_enemyAttackHitBox != null)
             {
                 _enemyAttackHitBox.OnPlayerHit += HandleEnemyAttackImpactSound;
+            }
+
+            if(_playerHealth != null)
+            {
+                _playerHealth.OnPlayerDeath += OnPlayerDied;
             }
         }
 
@@ -195,6 +221,11 @@ namespace PrabuddhaSingh.FinalCharachterController
             if (_enemyAttackHitBox != null)
             {
                 _enemyAttackHitBox.OnPlayerHit -= HandleEnemyAttackImpactSound;
+            }
+
+            if(_playerHealth != null)
+            {
+                _playerHealth.OnPlayerDeath -= OnPlayerDied;
             }
         }
 
