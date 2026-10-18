@@ -48,7 +48,6 @@ namespace PrabuddhaSingh.FinalCharachterController
         {
             if(attackHitbox != null)
             {
-                Debug.Log("Subscribing to OnHit event");
                 attackHitbox.OnHit += HandleAttackImpactSound;
             }
         }
@@ -57,14 +56,12 @@ namespace PrabuddhaSingh.FinalCharachterController
         {
             if(attackHitbox != null)
             {
-                Debug.Log("Unsubscribing from OnHit event");
                 attackHitbox.OnHit -= HandleAttackImpactSound;
             }
         }
 
         private void HandleAttackImpactSound()
         {
-            Debug.Log("Impact sound triggered");
            _playerCombatAudio.PlayImpactSFX(CurrentComboIndex);
         }
 

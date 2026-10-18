@@ -92,13 +92,17 @@ namespace PrabuddhaSingh.FinalCharachterController
         public void FinishChargedAttack()
         {
             playerState.ClearPlayerActionState();
-            Debug.Log("Charged Attack Finished");
         }
 
         public void DoChargedAttack()
         {
             energyBlast.ExecuteBlast();
         }
+
+        public void OnDeathAnimationFinished()
+        {
+            Debug.Log("player is dead, showing game over UI");
+            GameOverUI.Instance?.ShowGameOverUI();
+        }
     }
 }
-

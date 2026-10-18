@@ -30,7 +30,6 @@ namespace PrabuddhaSingh.FinalCharachterController
 
             currentMana = Mathf.Clamp(currentMana + amount, 0f, maxMana);
             OnManaUpdate?.Invoke((int)currentMana, (int)maxMana);
-            Debug.Log("Mana added: " + amount + ", Current Mana: " + currentMana);
         }
 
         public bool ConsumeMana()
@@ -42,4 +41,3 @@ namespace PrabuddhaSingh.FinalCharachterController
         }
     }
 }
-

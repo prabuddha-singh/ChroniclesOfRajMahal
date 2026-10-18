@@ -75,7 +75,6 @@ namespace PrabuddhaSingh.FinalCharachterController
         {
             if (isDead)
             {
-                Debug.Log("Player is already dead.");
                 return;
             }
             isDead = true;
@@ -85,12 +84,8 @@ namespace PrabuddhaSingh.FinalCharachterController
                 hitRecoveryRoutine = null;
             }
 
-            Debug.Log($"BEFORE: {_playerState.CurrentPlayerActionState}");
-            Debug.Log($"PlayerState reference: {_playerState.GetInstanceID()}");
-
             _playerState.SetPlayerActionState(PlayerActionStates.Dead);
-            Debug.Log($"AFTER: {_playerState.CurrentPlayerActionState}");
-            Debug.Log($"GetComponent reference: {_playerState.GetInstanceID()}");
+
         }
     }
 }

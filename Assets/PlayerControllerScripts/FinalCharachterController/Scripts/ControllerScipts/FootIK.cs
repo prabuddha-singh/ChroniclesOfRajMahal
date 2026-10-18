@@ -12,16 +12,9 @@ namespace PrabuddhaSingh.FinalCharachterController
         [SerializeField] private float footOffset = 0.1f;
         [SerializeField] private float ikWeight = 1f;
         [SerializeField] private float rayCastDistace = 1f;
-        private bool isikActive = false;
 
         private void OnAnimatorIK(int layerIndex)
         {
-            if(!isikActive)
-            {
-                Debug.Log("Foot ik is running");
-                isikActive = true;
-            }
-            ;
             if (animator == null) return;
 
             ApplyFootIK(AvatarIKGoal.LeftFoot, HumanBodyBones.LeftFoot);
@@ -38,12 +31,6 @@ namespace PrabuddhaSingh.FinalCharachterController
 
             if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, rayCastDistace, groundLayer))
             {
-                Debug.DrawRay(
-                hit.point,
-                hit.normal,
-                Color.green
-                );
-
                 Vector3 footPosition = hit.point;
                 footPosition.y += footOffset;
                 animator.SetIKPosition(foot, footPosition);
@@ -65,5 +52,4 @@ namespace PrabuddhaSingh.FinalCharachterController
 
     }
 }
-
 

@@ -20,7 +20,6 @@ public class PlayerLocomotionInput : MonoBehaviour,PlayerControls.IPlayerLocomot
     private void OnEnable(){
 
         if(PlayerInputManager.Instance?.PlayerControls==null){
-            Debug.LogError("Cannot enable Player Controls");
             return;
         }
     
@@ -31,7 +30,6 @@ public class PlayerLocomotionInput : MonoBehaviour,PlayerControls.IPlayerLocomot
     private void OnDisable(){
         
          if (PlayerInputManager.Instance?.PlayerControls == null){
-                Debug.LogError("Cannot disable Player Controls");
                 return;
             }
             
@@ -47,7 +45,6 @@ public class PlayerLocomotionInput : MonoBehaviour,PlayerControls.IPlayerLocomot
         public void OnMovement(InputAction.CallbackContext context)
         {
             MovementInput=context.ReadValue<Vector2>();
-            print(MovementInput);
         }
 
         public void OnLook(InputAction.CallbackContext context)

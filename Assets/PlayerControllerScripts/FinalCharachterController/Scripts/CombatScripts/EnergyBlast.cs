@@ -30,7 +30,6 @@ namespace PrabuddhaSingh.FinalCharachterController
                 if (damageable != null)
                 {
                     damageable.TakeDamage(blastDamage);
-                    Debug.Log("Dealt damage to" + col.name);
                 }
                 if (knockbackable != null && enemyController != null && enemyController._currentState != EnemyController.EnemyState.Dead)
                 {
@@ -82,4 +81,3 @@ namespace PrabuddhaSingh.FinalCharachterController
         }
     }
 }
-

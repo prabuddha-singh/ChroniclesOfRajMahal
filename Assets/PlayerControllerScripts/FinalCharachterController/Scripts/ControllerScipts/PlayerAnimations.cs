@@ -107,11 +107,6 @@ namespace PrabuddhaSingh.FinalCharachterController
             _animator.SetBool(isInJumpAnimHash, _playerController.IsInJumpAnim);
             _animator.SetBool(isChargingHash, _playerState.CurrentPlayerActionState == PlayerActionStates.Charging);
             _animator.SetBool(isDeadHash, isDead);
-            if (isDead)
-            {
-                Debug.Log("Animator isDead = TRUE");
-            }
-
         }
 
         private void OnEnable()

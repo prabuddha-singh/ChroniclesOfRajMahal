@@ -65,7 +65,6 @@ namespace PrabuddhaSingh.FinalCharachterController
                 _hasHit = true;
                 damageable.TakeDamage(10);
                 _manaController.AddMana(manaGainPerHit);
-                Debug.Log("Hit confirmed");
                 OnHit?.Invoke();
             }
 
@@ -104,6 +103,5 @@ namespace PrabuddhaSingh.FinalCharachterController
   } 
 }
    
-
 
 
