@@ -5604,7 +5604,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 355d0b61f539b8445a4317b6e806ec92, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PrabuddhaSingh.FinalCharachterController.PlayerHealth
-  maxHealth: 20
+  maxHealth: 100
   currentHealth: 0
   hitRecoveryDuration: 1.1
   _playerState: {fileID: 0}
