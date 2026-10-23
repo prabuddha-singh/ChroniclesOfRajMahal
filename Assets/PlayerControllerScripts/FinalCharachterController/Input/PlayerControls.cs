@@ -392,6 +392,34 @@ namespace PrabuddhaSingh.FinalCharachterController
                     ""isPartOfComposite"": false
                 }
             ]
+        },
+        {
+            ""name"": ""PauseActionMap"",
+            ""id"": ""316fe940-083f-4b8f-ae3d-7fb1f9d680be"",
+            ""actions"": [
+                {
+                    ""name"": ""Pause"",
+                    ""type"": ""Button"",
+                    ""id"": ""206b495e-ce45-4a05-9609-4dd37a0127d7"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""38e10fbc-bd65-4a26-8d42-5c8c9c3c12d8"",
+                    ""path"": ""<Keyboard>/escape"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Pause"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": []
@@ -411,6 +439,9 @@ namespace PrabuddhaSingh.FinalCharachterController
             m_PlayerActionsMap_Attack = m_PlayerActionsMap.FindAction("Attack", throwIfNotFound: true);
             m_PlayerActionsMap_Gather = m_PlayerActionsMap.FindAction("Gather", throwIfNotFound: true);
             m_PlayerActionsMap_ChargedAttack = m_PlayerActionsMap.FindAction("ChargedAttack", throwIfNotFound: true);
+            // PauseActionMap
+            m_PauseActionMap = asset.FindActionMap("PauseActionMap", throwIfNotFound: true);
+            m_PauseActionMap_Pause = m_PauseActionMap.FindAction("Pause", throwIfNotFound: true);
         }
 
         ~@PlayerControls()
@@ -418,6 +449,7 @@ namespace PrabuddhaSingh.FinalCharachterController
             UnityEngine.Debug.Assert(!m_PlayerLocomotionMap.enabled, "This will cause a leak and performance issues, PlayerControls.PlayerLocomotionMap.Disable() has not been called.");
             UnityEngine.Debug.Assert(!m_ThirdPersonMap.enabled, "This will cause a leak and performance issues, PlayerControls.ThirdPersonMap.Disable() has not been called.");
             UnityEngine.Debug.Assert(!m_PlayerActionsMap.enabled, "This will cause a leak and performance issues, PlayerControls.PlayerActionsMap.Disable() has not been called.");
+            UnityEngine.Debug.Assert(!m_PauseActionMap.enabled, "This will cause a leak and performance issues, PlayerControls.PauseActionMap.Disable() has not been called.");
         }
 
         /// <summary>
@@ -843,6 +875,102 @@ namespace PrabuddhaSingh.FinalCharachterController
         /// Provides a new <see cref="PlayerActionsMapActions" /> instance referencing this action map.
         /// </summary>
         public PlayerActionsMapActions @PlayerActionsMap => new PlayerActionsMapActions(this);
+
+        // PauseActionMap
+        private readonly InputActionMap m_PauseActionMap;
+        private List<IPauseActionMapActions> m_PauseActionMapActionsCallbackInterfaces = new List<IPauseActionMapActions>();
+        private readonly InputAction m_PauseActionMap_Pause;
+        /// <summary>
+        /// Provides access to input actions defined in input action map "PauseActionMap".
+        /// </summary>
+        public struct PauseActionMapActions
+        {
+            private @PlayerControls m_Wrapper;
+
+            /// <summary>
+            /// Construct a new instance of the input action map wrapper class.
+            /// </summary>
+            public PauseActionMapActions(@PlayerControls wrapper) { m_Wrapper = wrapper; }
+            /// <summary>
+            /// Provides access to the underlying input action "PauseActionMap/Pause".
+            /// </summary>
+            public InputAction @Pause => m_Wrapper.m_PauseActionMap_Pause;
+            /// <summary>
+            /// Provides access to the underlying input action map instance.
+            /// </summary>
+            public InputActionMap Get() { return m_Wrapper.m_PauseActionMap; }
+            /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Enable()" />
+            public void Enable() { Get().Enable(); }
+            /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Disable()" />
+            public void Disable() { Get().Disable(); }
+            /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.enabled" />
+            public bool enabled => Get().enabled;
+            /// <summary>
+            /// Implicitly converts an <see ref="PauseActionMapActions" /> to an <see ref="InputActionMap" /> instance.
+            /// </summary>
+            public static implicit operator InputActionMap(PauseActionMapActions set) { return set.Get(); }
+            /// <summary>
+            /// Adds <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+            /// </summary>
+            /// <param name="instance">Callback instance.</param>
+            /// <remarks>
+            /// If <paramref name="instance" /> is <c>null</c> or <paramref name="instance"/> have already been added this method does nothing.
+            /// </remarks>
+            /// <seealso cref="PauseActionMapActions" />
+            public void AddCallbacks(IPauseActionMapActions instance)
+            {
+                if (instance == null || m_Wrapper.m_PauseActionMapActionsCallbackInterfaces.Contains(instance)) return;
+                m_Wrapper.m_PauseActionMapActionsCallbackInterfaces.Add(instance);
+                @Pause.started += instance.OnPause;
+                @Pause.performed += instance.OnPause;
+                @Pause.canceled += instance.OnPause;
+            }
+
+            /// <summary>
+            /// Removes <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+            /// </summary>
+            /// <remarks>
+            /// Calling this method when <paramref name="instance" /> have not previously been registered has no side-effects.
+            /// </remarks>
+            /// <seealso cref="PauseActionMapActions" />
+            private void UnregisterCallbacks(IPauseActionMapActions instance)
+            {
+                @Pause.started -= instance.OnPause;
+                @Pause.performed -= instance.OnPause;
+                @Pause.canceled -= instance.OnPause;
+            }
+
+            /// <summary>
+            /// Unregisters <param cref="instance" /> and unregisters all input action callbacks via <see cref="PauseActionMapActions.UnregisterCallbacks(IPauseActionMapActions)" />.
+            /// </summary>
+            /// <seealso cref="PauseActionMapActions.UnregisterCallbacks(IPauseActionMapActions)" />
+            public void RemoveCallbacks(IPauseActionMapActions instance)
+            {
+                if (m_Wrapper.m_PauseActionMapActionsCallbackInterfaces.Remove(instance))
+                    UnregisterCallbacks(instance);
+            }
+
+            /// <summary>
+            /// Replaces all existing callback instances and previously registered input action callbacks associated with them with callbacks provided via <param cref="instance" />.
+            /// </summary>
+            /// <remarks>
+            /// If <paramref name="instance" /> is <c>null</c>, calling this method will only unregister all existing callbacks but not register any new callbacks.
+            /// </remarks>
+            /// <seealso cref="PauseActionMapActions.AddCallbacks(IPauseActionMapActions)" />
+            /// <seealso cref="PauseActionMapActions.RemoveCallbacks(IPauseActionMapActions)" />
+            /// <seealso cref="PauseActionMapActions.UnregisterCallbacks(IPauseActionMapActions)" />
+            public void SetCallbacks(IPauseActionMapActions instance)
+            {
+                foreach (var item in m_Wrapper.m_PauseActionMapActionsCallbackInterfaces)
+                    UnregisterCallbacks(item);
+                m_Wrapper.m_PauseActionMapActionsCallbackInterfaces.Clear();
+                AddCallbacks(instance);
+            }
+        }
+        /// <summary>
+        /// Provides a new <see cref="PauseActionMapActions" /> instance referencing this action map.
+        /// </summary>
+        public PauseActionMapActions @PauseActionMap => new PauseActionMapActions(this);
         /// <summary>
         /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "PlayerLocomotionMap" which allows adding and removing callbacks.
         /// </summary>
@@ -929,6 +1057,21 @@ namespace PrabuddhaSingh.FinalCharachterController
             /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
             /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
             void OnChargedAttack(InputAction.CallbackContext context);
+        }
+        /// <summary>
+        /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "PauseActionMap" which allows adding and removing callbacks.
+        /// </summary>
+        /// <seealso cref="PauseActionMapActions.AddCallbacks(IPauseActionMapActions)" />
+        /// <seealso cref="PauseActionMapActions.RemoveCallbacks(IPauseActionMapActions)" />
+        public interface IPauseActionMapActions
+        {
+            /// <summary>
+            /// Method invoked when associated input action "Pause" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnPause(InputAction.CallbackContext context);
         }
     }
 }
