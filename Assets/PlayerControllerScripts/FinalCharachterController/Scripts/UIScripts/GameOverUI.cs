@@ -15,6 +15,8 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         private bool isGameOver = false;
 
+        private PlayerLocomotionInput playerLocomotionInput;
+
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -26,6 +28,7 @@ namespace PrabuddhaSingh.FinalCharachterController
             {
                 Debug.Log("GameOverPanel is not assigned in the inspector.");
             }
+            playerLocomotionInput = FindFirstObjectByType<PlayerLocomotionInput>();
             gameOverPanel.SetActive(false);
             canvasGroup.alpha = 0f;
         }
@@ -35,6 +38,7 @@ namespace PrabuddhaSingh.FinalCharachterController
             if(isGameOver) return;
 
             isGameOver = true;
+            playerLocomotionInput.isLookDisabled = true;
             gameOverPanel.SetActive(true);
             StartCoroutine(GameOverSequence());
         }

@@ -48,16 +48,27 @@ namespace PrabuddhaSingh.FinalCharachterController
             }
         }
 
+        private void SetLookDisabled(bool blocked)
+        {
+            var locomotionInput = FindFirstObjectByType<PlayerLocomotionInput>();
+            if(locomotionInput != null)
+            {
+                locomotionInput.isLookDisabled = blocked;
+            }
+        }
+
         public void ResumeGame()
         {
             PauseMenuUI.SetActive(false);
             Time.timeScale = 1f;
+            SetLookDisabled(false);
             isPaused = false;
         }
 
         private void PauseGame()
         { 
             PauseMenuUI.SetActive(true);
+            SetLookDisabled(true);
             Time.timeScale = 0f;
             isPaused = true;
         }

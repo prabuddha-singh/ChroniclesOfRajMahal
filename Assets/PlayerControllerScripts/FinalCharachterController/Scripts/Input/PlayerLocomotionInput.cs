@@ -16,6 +16,7 @@ public class PlayerLocomotionInput : MonoBehaviour,PlayerControls.IPlayerLocomot
     public Vector2 LookInput { get; private set; }
     public bool JumpPressed { get; private set; }
     public bool WalkToggledOn { get; private set; }
+    public bool isLookDisabled { get;  set; }
 
     private void OnEnable(){
 
@@ -49,6 +50,11 @@ public class PlayerLocomotionInput : MonoBehaviour,PlayerControls.IPlayerLocomot
 
         public void OnLook(InputAction.CallbackContext context)
         {
+            if (isLookDisabled)
+            {
+                LookInput = Vector2.zero;
+                return;
+            }
             LookInput=context.ReadValue<Vector2>();
         }
 
