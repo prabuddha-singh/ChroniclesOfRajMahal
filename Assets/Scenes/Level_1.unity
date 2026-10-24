@@ -25856,7 +25856,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2537149341899367367, guid: 607150513c688d649a432da8ef412b37, type: 3}
       propertyPath: _punchLungeDistance
-      value: 2
+      value: 1.67
       objectReference: {fileID: 0}
     - target: {fileID: 2537149341899367367, guid: 607150513c688d649a432da8ef412b37, type: 3}
       propertyPath: ledgeAssistStrength
