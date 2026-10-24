@@ -5609,6 +5609,7 @@ MonoBehaviour:
   playerCombat: {fileID: 898803107}
   playerHealth: {fileID: 898803108}
   energyBlast: {fileID: 898803121}
+  playerController: {fileID: 0}
 --- !u!114 &898803107
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -25852,6 +25853,10 @@ PrefabInstance:
     - target: {fileID: 2537149341899367367, guid: 607150513c688d649a432da8ef412b37, type: 3}
       propertyPath: sprintAcceleration
       value: 18
+      objectReference: {fileID: 0}
+    - target: {fileID: 2537149341899367367, guid: 607150513c688d649a432da8ef412b37, type: 3}
+      propertyPath: _punchLungeDistance
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 2537149341899367367, guid: 607150513c688d649a432da8ef412b37, type: 3}
       propertyPath: ledgeAssistStrength

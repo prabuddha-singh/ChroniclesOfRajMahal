@@ -68,6 +68,10 @@ namespace PrabuddhaSingh.FinalCharachterController
         private Vector3 _knockbackVelocity;
         private float _knockbackTimer;
         private bool _isKnockbackActive;
+        [SerializeField] private float _punchLungeDistance = 2f;
+        [SerializeField] private float _punchLungeDuration = 0.2f;
+        private float _punchLungeTimer;
+        private float _punchLungeSpeed;
 
         [SerializeField] private float ledgeAssistWindow = 0.25f;
         private float ledgeAssistTimer;
@@ -214,13 +218,12 @@ namespace PrabuddhaSingh.FinalCharachterController
         }
         private void HandleLateralMovement()
         {
-
-
             if (_isKnockbackActive)
                 return;
 
             if (_playerState.BlocksMovement())
             {
+                _punchLungeTimer = 0f;
                 Vector3 velocity = new Vector3(0f, _verticalVelocity, 0f);
                 _characterController.Move(velocity * Time.deltaTime);
                 return;
@@ -274,7 +277,14 @@ namespace PrabuddhaSingh.FinalCharachterController
 
 
             ApplyLedgeAssist();
-            _characterController.Move(finalVelocity * Time.deltaTime);
+            Vector3 punchLunge = Vector3.zero;
+            if(_punchLungeTimer > 0f)
+            {
+                float LungeDelta = Mathf.Min(Time.deltaTime, _punchLungeTimer);
+                punchLunge = transform.forward * _punchLungeSpeed * LungeDelta;
+                _punchLungeTimer -= LungeDelta;
+            }
+            _characterController.Move(finalVelocity * Time.deltaTime + punchLunge);
         }
 
         private void ApplyLedgeAssist()
@@ -429,6 +439,13 @@ namespace PrabuddhaSingh.FinalCharachterController
         public void ResetLateralVelocity()
         {
             _chachedLateralVelocity = Vector3.zero;
+        }
+
+        public void StartPunchLunge()
+        {
+            if(!_isGrounded || _isKnockbackActive) return;
+            _punchLungeTimer = _punchLungeDuration;
+            _punchLungeSpeed = _punchLungeDistance / _punchLungeDuration;
         }
     }
 }

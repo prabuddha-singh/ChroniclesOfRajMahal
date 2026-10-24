@@ -11,6 +11,7 @@ namespace PrabuddhaSingh.FinalCharachterController
         [SerializeField] private PlayerCombat playerCombat;
         [SerializeField] private PlayerHealth playerHealth;
         [SerializeField] private EnergyBlast energyBlast;
+        [SerializeField] private PlayerController playerController;
 
         private void Awake()
         {
@@ -30,6 +31,10 @@ namespace PrabuddhaSingh.FinalCharachterController
             if(energyBlast == null)
             {
                 energyBlast = GetComponentInParent<EnergyBlast>();
+            }
+            if(playerController == null)
+            {
+                playerController = GetComponentInParent<PlayerController>();
             }
         }
 
