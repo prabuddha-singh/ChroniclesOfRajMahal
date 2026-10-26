@@ -220,6 +220,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 8
       objectReference: {fileID: 0}
+    - target: {fileID: -2077719864273070468, guid: 5ea9fdc017006b34dab142ee6528c8f7, type: 3}
+      propertyPath: m_CastShadows
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: -1781356600409242780, guid: 5ea9fdc017006b34dab142ee6528c8f7, type: 3}
       propertyPath: m_Layer
       value: 8
@@ -569,6 +573,7 @@ MonoBehaviour:
   _enemyAudioController: {fileID: 0}
   _enemyAttackHitBox: {fileID: 0}
   _waveManager: {fileID: 0}
+  _playerHealth: {fileID: 0}
   _distance: 1
   _rotationSpeed: 10
   _detectionRange: 25
@@ -576,6 +581,8 @@ MonoBehaviour:
   _attackCooldown: 2
   _stoppingDistance: 1.2
   _avoidancePriority: 50
+  _pathUpdateInterval: 0.2
+  _minimumTargetMovement: 0.5
 --- !u!114 &4820946780454523193
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -24833,7 +24833,7 @@ MonoBehaviour:
   startingEnemyCount: 3
   enemyIncreasePerWave: 1
   timeBetweenWaves: 3
-  maxWaves: 6
+  maxWaves: 5
   spawnPoints:
   - {fileID: 1406396769}
   - {fileID: 117309991}

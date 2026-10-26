@@ -33,7 +33,13 @@ namespace PrabuddhaSingh.FinalCharachterController
         [SerializeField] private float _attackCooldown = 0.6f;
         [SerializeField] private float _stoppingDistance =1.2f;
         [SerializeField] private int _avoidancePriority = 50;
+
+        [Header("Path Optimization")]
+        [SerializeField, Min(0.05f)] private float _pathUpdateInterval = 0.2f;
+        [SerializeField, Min(0.1f)] private float _minimumTargetMovement = 0.5f;
         private float attackTimer;
+        private float _pathUpdateTimer;
+        private Vector3 _lastDestination;
 
         private bool _isDead = false;
         private bool _playerisDead = false;
@@ -160,7 +166,15 @@ namespace PrabuddhaSingh.FinalCharachterController
             {
                 _agent.stoppingDistance = _stoppingDistance;
             }
-            _agent.SetDestination(_player.position);
+            _pathUpdateTimer += Time.deltaTime;
+
+            bool targetMoved = (_player.position - _lastDestination).sqrMagnitude >= Mathf.Pow(_minimumTargetMovement, 2);
+            if (_pathUpdateTimer <= 0f || targetMoved)
+            {
+                _agent.SetDestination(_player.position);
+                _lastDestination = _player.position;
+                _pathUpdateTimer = _pathUpdateInterval;
+            }
         }
 
         private void AttackState()
