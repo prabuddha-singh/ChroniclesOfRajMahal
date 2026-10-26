@@ -14,7 +14,7 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         private void Awake()
         {
-            var canvas = FindObjectOfType<Canvas>();
+            var canvas = FindFirstObjectByType<Canvas>();
             if (canvas == null) return;
 
             howToPlayPanel = FindDescendant(canvas.transform, "HowToPlayPanel")?.gameObject;
@@ -42,7 +42,7 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         private void AddMenuAction(string objectName, UnityEngine.Events.UnityAction action)
         {
-            var canvas = FindObjectOfType<Canvas>();
+            var canvas = FindFirstObjectByType<Canvas>();
             var target = canvas == null ? null : FindDescendant(canvas.transform, objectName);
             var button = target == null ? null : target.GetComponent<Button>();
             if (button != null) button.onClick.AddListener(action);
