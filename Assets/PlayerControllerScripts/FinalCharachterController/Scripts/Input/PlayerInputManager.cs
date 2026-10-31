@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 namespace PrabuddhaSingh.FinalCharachterController{
 
@@ -32,6 +33,11 @@ namespace PrabuddhaSingh.FinalCharachterController{
 
         private void OnDisable()
         {
+            Debug.LogError(
+        "PLAYER INPUT MANAGER DISABLED!\n" +
+        "Scene: " + gameObject.scene.name + "\n" +
+        "Stack Trace:\n" + Environment.StackTrace
+    );
             Debug.Log("Player input manager Disabled");
             if(PlayerControls != null)
             {
