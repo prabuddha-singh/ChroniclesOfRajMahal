@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Cinemachine;
@@ -13,10 +14,10 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         [SerializeField] private CinemachineVirtualCamera _virtualCamera;
         [SerializeField] private float _cameraZoomSpeed = 0.1f;
-        [SerializeField] private float _cameraMinZoom =1f;
-        [SerializeField] private float _cameraMaxZoom =5f;
+        [SerializeField] private float _cameraMinZoom = 1f;
+        [SerializeField] private float _cameraMaxZoom = 5f;
 
-         private Cinemachine3rdPersonFollow _thirdPersonFollow;
+        private Cinemachine3rdPersonFollow _thirdPersonFollow;
 
         void Awake()
         {
@@ -25,6 +26,7 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         private void OnEnable()
         {
+            Debug.Log($"ThirdPersonInput ENABLED | " + $"ID: {GetInstanceID()} | " + $"Scene: {gameObject.scene.name}");
 
             if (PlayerInputManager.Instance?.PlayerControls == null)
             {
@@ -38,10 +40,14 @@ namespace PrabuddhaSingh.FinalCharachterController
         private void OnDisable()
         {
 
+            Debug.Log($"ThirdPersonInput DISABLED | " + $"ID: {GetInstanceID()} | " + $"Scene: {gameObject.scene.name}");
+
             if (PlayerInputManager.Instance?.PlayerControls == null)
             {
                 return;
             }
+
+            Debug.Log($"ThirdPersonMap being disabled | " + $"ID: {GetInstanceID()} | " + $"Map enabled: {PlayerInputManager.Instance.PlayerControls.ThirdPersonMap.enabled}");
 
             PlayerInputManager.Instance.PlayerControls.ThirdPersonMap.Disable();
             PlayerInputManager.Instance.PlayerControls.ThirdPersonMap.RemoveCallbacks(this);
@@ -51,18 +57,19 @@ namespace PrabuddhaSingh.FinalCharachterController
             if (!context.performed) return;
 
             Vector2 scrollInput = context.ReadValue<Vector2>();
-            ScrollInput = -1f * (scrollInput.normalized * _cameraZoomSpeed);
+            ScrollInput = -scrollInput * _cameraZoomSpeed;
 
         }
 
         private void Update()
         {
-            _thirdPersonFollow.CameraDistance = Mathf.Clamp(_thirdPersonFollow.CameraDistance + ScrollInput.y, _cameraMinZoom, _cameraMaxZoom);
-        }
-
-        private void LateUpdate(){
+            if (Mathf.Abs(ScrollInput.y) > 0.001f)
+            {
+                _thirdPersonFollow.CameraDistance = Mathf.Clamp(_thirdPersonFollow.CameraDistance + ScrollInput.y, _cameraMinZoom, _cameraMaxZoom);
+            }
             ScrollInput = Vector2.zero;
         }
+
     }
 
 }

@@ -25,14 +25,20 @@ namespace PrabuddhaSingh.FinalCharachterController{
 
         private void OnEnable()
         {
+            Debug.Log("Player input manager Enabled");
             PlayerControls = new PlayerControls();
             PlayerControls.Enable();
         }
 
         private void OnDisable()
         {
-            PlayerControls = new PlayerControls();
-            PlayerControls.Disable();           
+            Debug.Log("Player input manager Disabled");
+            if(PlayerControls != null)
+            {
+                PlayerControls.Disable();
+                PlayerControls.Dispose();
+                PlayerControls=null;
+            }           
         }
   }
 }

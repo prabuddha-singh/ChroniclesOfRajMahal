@@ -4,63 +4,68 @@ using System;
 
 namespace PrabuddhaSingh.FinalCharachterController
 {
-    public class AttackHitbox : MonoBehaviour{
-    [SerializeField] private Collider _collider;
-    [SerializeField] private float knockbackForce = 6f;
-    [SerializeField] private float knockbackDuration = 0.15f;
-    [SerializeField] private GameObject hitEffectPrefab;
-    [SerializeField] private float hitEffectLifetime = 1f;
-    [SerializeField] private float manaGainPerHit = 10f;
-    private bool _hasHit;
-    private PlayerState _playerState;
-    private ManaController _manaController;
-    public event Action OnHit;
-    private HashSet<GameObject> hitTargets = new HashSet<GameObject>();
-
-    private void Awake()
+    public class AttackHitbox : MonoBehaviour
     {
-        _collider = GetComponent<Collider>();
-        _playerState = GetComponentInParent<PlayerState>();
-        _collider.enabled = false;
-        _manaController = GetComponentInParent<ManaController>();
-    }
+        [SerializeField] private Collider _collider;
+        [SerializeField] private float knockbackForce = 6f;
+        [SerializeField] private float knockbackDuration = 0.15f;
+        [SerializeField] private GameObject hitEffectPrefab;
+        [SerializeField] private float hitEffectLifetime = 1f;
+        [SerializeField] private float manaGainPerHit = 10f;
+        private bool _hasHit;
+        private PlayerState _playerState;
+        private ManaController _manaController;
+        public event Action OnHit;
+        private HashSet<GameObject> hitTargets = new HashSet<GameObject>();
 
-    public void EnableHitbox()
-    {
-        _hasHit = false;
-        _collider.enabled = true;
-        hitTargets.Clear();
-    }
-
-    public void DisableHitbox()
-    {
-        _collider.enabled = false;
-        _hasHit=false;
-        hitTargets.Clear();
-    }
-
-    private void SpawnHitEffect(Vector3 position , Vector3 normal)
+        private void Awake()
         {
-            if(hitEffectPrefab == null) return;
-
-            Quaternion rotation = Quaternion.LookRotation(normal);
-            GameObject HitVFX = Instantiate(hitEffectPrefab, position, rotation);
-            Destroy(HitVFX , hitEffectLifetime);
+            _collider = GetComponent<Collider>();
+            _playerState = GetComponentInParent<PlayerState>();
+            _collider.enabled = false;
+            _manaController = GetComponentInParent<ManaController>();
         }
 
-    private void OnTriggerEnter(Collider other)
+        public void EnableHitbox()
         {
-            if(_hasHit) return;
+            _hasHit = false;
+            _collider.enabled = true;
+            hitTargets.Clear();
+        }
 
-            if(!_playerState.IsPlayingAction()) return;
+        public void DisableHitbox()
+        {
+            _collider.enabled = false;
+            _hasHit = false;
+            hitTargets.Clear();
+        }
 
-            if(other.CompareTag("Player")) return;
+        private void SpawnHitEffect(Vector3 position, Vector3 normal)
+        {
+            if (hitEffectPrefab == null) return;
 
-            if(hitTargets.Contains(other.gameObject)) return;
+            Quaternion rotation = normal.sqrMagnitude > 0.001f
+                ? Quaternion.LookRotation(normal)
+                : Quaternion.identity;
+
+            GameObject hitVFX = Instantiate(hitEffectPrefab, position, rotation);
+
+            Destroy(hitVFX, hitEffectLifetime);
+        }
+
+        private void OnTriggerEnter(Collider other)
+        {
+            if (_hasHit) return;
+
+            if (!_playerState.IsPlayingAction()) return;
+
+            if (other.CompareTag("Player")) return;
+
+            if (hitTargets.Contains(other.gameObject)) return;
 
             hitTargets.Add(other.gameObject);
 
-            if(other.TryGetComponent<IDamageable>(out var damageable))
+            if (other.TryGetComponent<IDamageable>(out var damageable))
             {
                 _hasHit = true;
                 damageable.TakeDamage(10);
@@ -68,7 +73,7 @@ namespace PrabuddhaSingh.FinalCharachterController
                 OnHit?.Invoke();
             }
 
-            if(other.TryGetComponent<IKnockbackable>(out var knockbackable))
+            if (other.TryGetComponent<IKnockbackable>(out var knockbackable))
             {
                 HitInfo hitInfo = new HitInfo
                 {
@@ -78,19 +83,19 @@ namespace PrabuddhaSingh.FinalCharachterController
                 };
                 knockbackable.ApplyKnockback(hitInfo);
             }
-            
+
             Vector3 closestPoint = other.ClosestPoint(transform.position);
             Vector3 hitNormal = (transform.position - closestPoint).normalized;
-            
+
             SpawnHitEffect(closestPoint, hitNormal);
-            if(HitStopManager.instance != null)
+            if (HitStopManager.instance != null)
             {
                 HitStopManager.instance.DoHitStop(0.08f);
             }
 
-            if(CameraShake.Instance != null)
+            if (CameraShake.Instance != null)
             {
-                CameraShake.Instance.Shake(0.35f, 2.2f);
+                CameraShake.Instance.Shake(0.45f, 3.7f);
             }
         }
 
@@ -98,10 +103,10 @@ namespace PrabuddhaSingh.FinalCharachterController
         {
             hitTargets.Remove(other.gameObject);
         }
-   
-   
-  } 
+
+
+    }
 }
-   
+
 
 

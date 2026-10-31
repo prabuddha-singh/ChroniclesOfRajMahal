@@ -29,10 +29,10 @@ namespace PrabuddhaSingh.FinalCharachterController
     {
         if(shakeRoutine != null)
         {
-            StopCoroutine(ShakeCoroutine(duration,strength));    
+            StopCoroutine(shakeRoutine);    
         }    
 
-        StartCoroutine(ShakeCoroutine(duration,strength));
+        shakeRoutine = StartCoroutine(ShakeCoroutine(duration,strength));
     }
 
     private IEnumerator ShakeCoroutine(float duration, float strength)
