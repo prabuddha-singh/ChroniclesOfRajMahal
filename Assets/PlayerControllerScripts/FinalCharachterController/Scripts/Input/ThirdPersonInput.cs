@@ -54,11 +54,11 @@ namespace PrabuddhaSingh.FinalCharachterController
         }
         public void OnMouseScroll(InputAction.CallbackContext context)
         {
+            
             if (!context.performed) return;
 
             Vector2 scrollInput = context.ReadValue<Vector2>();
             ScrollInput = -scrollInput * _cameraZoomSpeed;
-
         }
 
         private void Update()
