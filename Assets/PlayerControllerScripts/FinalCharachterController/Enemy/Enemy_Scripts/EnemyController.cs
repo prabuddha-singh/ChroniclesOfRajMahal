@@ -160,7 +160,6 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         private void ChaseState() //2
         {
-            //FacePlayer();
             _agent.isStopped = false;
             if(_agent.stoppingDistance != _stoppingDistance)
             {
@@ -179,7 +178,6 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         private void AttackState()
         { //3
-            FacePlayer();
             _agent.isStopped = true;
             if (attackTimer <= 0) attackTimer = _attackCooldown;
         }

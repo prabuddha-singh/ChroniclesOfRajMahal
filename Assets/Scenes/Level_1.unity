@@ -5827,6 +5827,18 @@ MonoBehaviour:
   blastVFXDelay: 0.05
   blastVFXLifetime: 2
   blastVFXPrefab: {fileID: 176822597162087251, guid: 46009f57772e5e743bec9df57a49ed66, type: 3}
+--- !u!114 &898803122
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 898803079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a804addaf7397c343a045619f7c21a0b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyFormationManager
 --- !u!1 &909313008
 GameObject:
   m_ObjectHideFlags: 0
@@ -26437,6 +26449,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1707806046774551108, guid: 607150513c688d649a432da8ef412b37, type: 3}
       insertIndex: -1
       addedObject: {fileID: 898803121}
+    - targetCorrespondingSourceObject: {fileID: 1707806046774551108, guid: 607150513c688d649a432da8ef412b37, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 898803122}
     - targetCorrespondingSourceObject: {fileID: 6693211676442818346, guid: 607150513c688d649a432da8ef412b37, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2118431782}
