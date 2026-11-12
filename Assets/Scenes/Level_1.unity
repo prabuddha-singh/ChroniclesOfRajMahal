@@ -5834,11 +5834,18 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 898803079}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a804addaf7397c343a045619f7c21a0b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyFormationManager
+  _frontArcAngle: 120
+  _frontFormationRadius: 2.5
+  _waitingRadius: 3.5
+  _minEnemySpacing: 1.5
+  _maxActiveAttackers: 1
+  _positionSearchSteps: 36
+  _navMeshSampleDistance: 1
 --- !u!1 &909313008
 GameObject:
   m_ObjectHideFlags: 0

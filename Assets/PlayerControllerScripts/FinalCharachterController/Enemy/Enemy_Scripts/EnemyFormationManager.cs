@@ -36,6 +36,13 @@ namespace PrabuddhaSingh.FinalCharachterController
         private readonly Dictionary<EnemyController, Vector3> _assignedPositions = new();
         private readonly Dictionary<EnemyController, bool> _isWaiting = new();
 
+        private NavMeshPath _navMeshPath;
+
+        private void Awake()
+        {
+            _navMeshPath = new NavMeshPath();
+        }
+
         public void RegisterEnemy(EnemyController enemy)
         {
             if (enemy == null || _registeredEnemies.Contains(enemy)) return;
@@ -100,7 +107,7 @@ namespace PrabuddhaSingh.FinalCharachterController
                 Vector3 direction = Quaternion.Euler(0f, angle, 0f) * forward;
                 Vector3 candidate = origin + direction * _frontFormationRadius;
 
-                if (!TrySamplePosition(candidate, out Vector3 sampled))
+                if (!TrySamplePosition(enemy, candidate, out Vector3 sampled))
                     continue;
 
                 if (!HasEnoughSpacing(enemy, sampled))
@@ -134,7 +141,7 @@ namespace PrabuddhaSingh.FinalCharachterController
                 Vector3 direction = Quaternion.Euler(0f, angle, 0f) * Vector3.forward;
                 Vector3 candidate = origin + direction * _waitingRadius;
 
-                if (!TrySamplePosition(candidate, out Vector3 sampled))
+                if (!TrySamplePosition(enemy, candidate, out Vector3 sampled))
                     continue;
 
                 if (!HasEnoughSpacing(enemy, sampled))
@@ -153,18 +160,29 @@ namespace PrabuddhaSingh.FinalCharachterController
             return found;
         }
 
-        private bool TrySamplePosition(Vector3 candidate, out Vector3 sampled)
+        private bool TrySamplePosition(EnemyController enemy, Vector3 candidate, out Vector3 sampled)
         {
             sampled = Vector3.zero;
+
+            if(enemy == null) return false;
+
+            NavMeshAgent agent = enemy.GetComponent<NavMeshAgent>();
+
+            if(agent == null || !agent.isOnNavMesh || !agent.enabled) return false;
 
             if (!NavMesh.SamplePosition(
                 candidate,
                 out NavMeshHit hit,
                 _navMeshSampleDistance,
-                NavMesh.AllAreas))
+                agent.areaMask))
                 return false;
 
             sampled = hit.position;
+
+            bool pathFound = NavMesh.CalculatePath(agent.nextPosition, sampled, agent.areaMask, _navMeshPath);
+
+            if(!pathFound || _navMeshPath.status != NavMeshPathStatus.PathComplete) return false;
+            
             return true;
         }
 
@@ -173,6 +191,16 @@ namespace PrabuddhaSingh.FinalCharachterController
             Vector3 candidate)
         {
             float minimumSpacingSqr = _minEnemySpacing * _minEnemySpacing;
+
+            foreach (var otherEnemy in _registeredEnemies)
+            {
+                if(otherEnemy == null || otherEnemy == requestingEnemy) continue;
+
+                Vector3 difference = otherEnemy.transform.position - candidate;
+                difference.y=0;
+
+                if(difference.sqrMagnitude < minimumSpacingSqr) return false;
+            }
 
             foreach (var assignment in _assignedPositions)
             {
@@ -203,6 +231,7 @@ namespace PrabuddhaSingh.FinalCharachterController
             if (enemy == null || !_registeredEnemies.Contains(enemy)) return;
 
             _registeredEnemies.Remove(enemy);
+            ReleasePosition(enemy);
         }
 
     }
