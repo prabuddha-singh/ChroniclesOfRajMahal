@@ -34,13 +34,29 @@ namespace PrabuddhaSingh.FinalCharachterController
         [SerializeField, Min(0.1f)] private float _navMeshSampleDistance = 1f;
 
         private readonly Dictionary<EnemyController, Vector3> _assignedPositions = new();
+        private readonly Dictionary<EnemyController, Vector3> _assignedLocalPositions = new();
         private readonly Dictionary<EnemyController, bool> _isWaiting = new();
-
+        private readonly HashSet<EnemyController> _activeAttackers = new();
         private NavMeshPath _navMeshPath;
+
+        [Header("Formation Settings")]
+        [SerializeField, Min(0.05f)] private float _formationUpdateInterval = 0.2f;
+        private float _formationUpdateTimer = 0f;
 
         private void Awake()
         {
             _navMeshPath = new NavMeshPath();
+        }
+
+        private void Update()
+        {
+            _formationUpdateTimer -= Time.deltaTime;
+
+            if(_formationUpdateTimer >= 0f) return;
+
+            _formationUpdateTimer = _formationUpdateInterval;
+
+            UpdateAssignedPosition();
         }
 
         public void RegisterEnemy(EnemyController enemy)
@@ -67,6 +83,7 @@ namespace PrabuddhaSingh.FinalCharachterController
             if (TryFindFrontPosition(enemy, out position))
             {
                 _assignedPositions.Add(enemy, position);
+                _assignedLocalPositions.Add(enemy, transform.InverseTransformPoint(position));
                 _isWaiting.Add(enemy, false);
                 return true;
             }
@@ -74,6 +91,7 @@ namespace PrabuddhaSingh.FinalCharachterController
             if (TryFindWaitingPosition(enemy, out position))
             {
                 _assignedPositions.Add(enemy, position);
+                _assignedLocalPositions.Add(enemy, transform.InverseTransformPoint(position));
                 _isWaiting.Add(enemy, true);
                 isWaiting = true;
                 return true;
@@ -179,8 +197,17 @@ namespace PrabuddhaSingh.FinalCharachterController
 
             sampled = hit.position;
 
-            bool pathFound = NavMesh.CalculatePath(agent.nextPosition, sampled, agent.areaMask, _navMeshPath);
+            Vector3 horizontalDifference = sampled - candidate;
+            horizontalDifference.y =0f;
 
+            if(horizontalDifference.sqrMagnitude > Mathf.Pow(0.15f,2)) return false;
+
+            bool pathFound = NavMesh.CalculatePath(
+                agent.nextPosition,
+                sampled,
+                agent.areaMask,
+                _navMeshPath
+            );
             if(!pathFound || _navMeshPath.status != NavMeshPathStatus.PathComplete) return false;
             
             return true;
@@ -217,19 +244,101 @@ namespace PrabuddhaSingh.FinalCharachterController
             return true;
         }
 
+        private void TryPromotingWaitingEnemy()
+        {
+            foreach (EnemyController enemy in _registeredEnemies)
+            {
+               if(enemy == null) continue;
+
+               if(!_isWaiting.TryGetValue(enemy, out bool waiting) || !waiting) continue;
+
+               if(TryFindFrontPosition(enemy, out Vector3 newPosition))
+                {
+                    _assignedPositions[enemy] = newPosition;
+                    _assignedLocalPositions[enemy] = transform.InverseTransformPoint(newPosition);
+                    _isWaiting[enemy] = false;
+
+                    return;
+                }
+            }
+        }
+
+        public bool TryRequestAttackPermission(EnemyController enemy)
+        {
+            if(enemy == null) return false;
+
+            if(_activeAttackers.Contains(enemy)) return true;
+
+            if(!_isWaiting.TryGetValue(enemy, out bool waiting) || waiting) return false;
+
+            if(_activeAttackers.Count >= _maxActiveAttackers) return false;
+
+            _activeAttackers.Add(enemy);
+            return true;
+        }
+
+        private void UpdateAssignedPosition()
+        {
+            foreach( var position in _assignedLocalPositions)
+            {
+                EnemyController enemy = position.Key;
+
+                if(enemy == null) continue;
+
+                NavMeshAgent agent = enemy.GetComponent<NavMeshAgent>();
+                if(agent == null || !agent.isOnNavMesh || !agent.enabled) continue;
+
+                Vector3 candidate = transform.TransformPoint(position.Value);
+
+                if(!NavMesh.SamplePosition(
+                    candidate,
+                    out NavMeshHit hit,
+                    _navMeshSampleDistance,
+                    agent.areaMask)) continue;
+
+                Vector3 difference = hit.position - candidate;
+                difference.y = 0f;
+
+                if(difference.sqrMagnitude > Mathf.Pow(0.15f,2)) continue;
+
+                bool pathFound = NavMesh.CalculatePath(
+                    agent.nextPosition,
+                    hit.position,
+                    agent.areaMask,
+                    _navMeshPath
+                );
+
+                _assignedPositions[enemy] = hit.position;
+            }
+        }
+
+        public void ReleaseAttackPermission(EnemyController enemy)
+        {
+            if(enemy == null) return;
+
+            _activeAttackers.Remove(enemy);
+        }
+
         public void ReleasePosition(EnemyController enemy)
         {
             if (enemy == null)
                 return;
-
-            _assignedPositions.Remove(enemy);
+            
+            bool hadPosition = _assignedPositions.Remove(enemy);
+            _assignedLocalPositions.Remove(enemy);
             _isWaiting.Remove(enemy);
+
+            if (hadPosition)
+            {
+                TryPromotingWaitingEnemy();
+            }
         }
 
         public void UnregisterEnemy(EnemyController enemy)
         {
             if (enemy == null || !_registeredEnemies.Contains(enemy)) return;
 
+            ReleaseAttackPermission(enemy);
             _registeredEnemies.Remove(enemy);
             ReleasePosition(enemy);
         }

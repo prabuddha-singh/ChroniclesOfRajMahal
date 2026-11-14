@@ -5834,15 +5834,15 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 898803079}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a804addaf7397c343a045619f7c21a0b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyFormationManager
   _frontArcAngle: 120
-  _frontFormationRadius: 2.5
-  _waitingRadius: 3.5
-  _minEnemySpacing: 1.5
+  _frontFormationRadius: 2
+  _waitingRadius: 2.8
+  _minEnemySpacing: 1.2
   _maxActiveAttackers: 1
   _positionSearchSteps: 36
   _navMeshSampleDistance: 1
@@ -24879,10 +24879,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PrabuddhaSingh.FinalCharachterController.WaveManager
   enemyPrefab: {fileID: 7989221348577215173, guid: 85cd923dcf397c64e9b4532fef806409, type: 3}
-  startingEnemyCount: 3
+  startingEnemyCount: 10
   enemyIncreasePerWave: 1
   timeBetweenWaves: 3
-  maxWaves: 5
+  maxWaves: 1
   spawnPoints:
   - {fileID: 1406396769}
   - {fileID: 117309991}

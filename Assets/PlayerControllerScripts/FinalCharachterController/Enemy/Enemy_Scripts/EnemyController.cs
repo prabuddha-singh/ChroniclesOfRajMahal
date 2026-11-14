@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.AI;
 
-
 namespace PrabuddhaSingh.FinalCharachterController
 {
     public class EnemyController : MonoBehaviour
@@ -23,20 +22,22 @@ namespace PrabuddhaSingh.FinalCharachterController
         [SerializeField] private EnemyAttackHitbox _enemyAttackHitBox;
         [SerializeField] private WaveManager _waveManager;
         [SerializeField] private PlayerHealth _playerHealth;
-
+        [SerializeField] private EnemyFormationManager _formationManager;
 
         [Header("Utility variables")]
         [SerializeField] private float _distance = 1f;
         [SerializeField] private float _rotationSpeed = 10f;
         [SerializeField] private float _detectionRange = 9f;
-        [SerializeField] private float _attackRange = 1.67f;//Six Seveeeeen
+        [SerializeField] private float _attackRange = 1.67f;
         [SerializeField] private float _attackCooldown = 0.6f;
-        [SerializeField] private float _stoppingDistance =1.2f;
+        [SerializeField] private float _stoppingDistance = 0.1f;
         [SerializeField] private int _avoidancePriority = 50;
+        [SerializeField] private float _disengageRange = 4f;
 
         [Header("Path Optimization")]
         [SerializeField, Min(0.05f)] private float _pathUpdateInterval = 0.2f;
         [SerializeField, Min(0.1f)] private float _minimumTargetMovement = 0.5f;
+
         private float attackTimer;
         private float _pathUpdateTimer;
         private Vector3 _lastDestination;
@@ -44,17 +45,24 @@ namespace PrabuddhaSingh.FinalCharachterController
         private bool _isDead = false;
         private bool _playerisDead = false;
         private float _hitLockTimer;
+        private bool _isRegistered;
+        private bool _hasDestination;
 
         private void Awake()
         {
             _agent = GetComponent<NavMeshAgent>();
+
             _player = GameObject.FindGameObjectWithTag("Player").transform;
             _playerHealth = _player.GetComponent<PlayerHealth>();
             _playerisDead = _playerHealth.isPlayerDead;
+
             _enemyAudioController = GetComponent<EnemyAudioController>();
             _enemyAttackHitBox = GetComponentInChildren<EnemyAttackHitbox>();
+
             _agent.stoppingDistance = _stoppingDistance;
             _agent.avoidancePriority = _avoidancePriority;
+
+            _formationManager = _player.GetComponent<EnemyFormationManager>();
         }
 
         private void Start()
@@ -64,11 +72,13 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         private void Update()
         {
-            if(_playerisDead) return;
-            if (attackTimer > 0)
+            if (_playerisDead) return;
+
+            if (attackTimer > 0f)
             {
                 attackTimer -= Time.deltaTime;
             }
+
             if (_isDead)
             {
                 ChangeState(EnemyState.Dead);
@@ -78,7 +88,12 @@ namespace PrabuddhaSingh.FinalCharachterController
             if (_hitLockTimer > 0f)
             {
                 _hitLockTimer -= Time.deltaTime;
-                _agent.isStopped = true;
+
+                if (_agent != null && _agent.enabled && _agent.isOnNavMesh)
+                {
+                    _agent.isStopped = true;
+                }
+
                 return;
             }
 
@@ -87,49 +102,96 @@ namespace PrabuddhaSingh.FinalCharachterController
             if (_distance > _detectionRange)
             {
                 ChangeState(EnemyState.Idle);
-            }
-            else if (_distance > _attackRange)
-            {
-                ChangeState(EnemyState.Chase);
-            }
-            else
-            {
-                if (attackTimer <= 0f)
-                {
-                    ChangeState(EnemyState.Attack);
-                }
+                IdleState();
+                return;
             }
 
-            switch (_currentState)
+            if (_currentState == EnemyState.Attack)
             {
-                case EnemyState.Idle:
-                    IdleState();
-                    break;
-                case EnemyState.Chase:
-                    ChaseState();
-                    break;
-                case EnemyState.Dead:
-                    DeadState();
-                    break;
-                case EnemyState.Attack:
-                    AttackState();
-                    break;
+                AttackState();
+                return;
             }
 
+            ChangeState(EnemyState.Chase);
+            UpdateFormationMovement();
         }
 
+        // Handles state transitions only. It does not calculate destinations.
         public void ChangeState(EnemyState newState)
         {
-            if(_playerisDead) return;
-            if (_isDead && newState != EnemyState.Dead) return;
             if (_currentState == newState) return;
+
+            // Release the attack slot when leaving the Attack state.
+            if (_currentState == EnemyState.Attack)
+            {
+                _formationManager?.ReleaseAttackPermission(this);
+            }
+
             _currentState = newState;
+
+            if (newState == EnemyState.Attack)
+            {
+                attackTimer = _attackCooldown;
+            }
 
             if (newState == EnemyState.Dead)
             {
-                _isDead = true;
+                DeadState();
+            }
+        }
 
-                _waveManager?.EnemyDead();
+        // Handles movement towards the position assigned by EnemyFormationManager.
+        private void UpdateFormationMovement()
+        {
+            if (_formationManager == null) return;
+            if (_agent == null || !_agent.enabled || !_agent.isOnNavMesh) return;
+
+            if (!_formationManager.TryGetAssignedPosition(
+                this, out Vector3 assignedPosition, out bool isWaiting))
+            {
+                _agent.isStopped = true;
+                return;
+            }
+
+            _agent.isStopped = false;
+
+            if (_agent.stoppingDistance != _stoppingDistance)
+            {
+                _agent.stoppingDistance = _stoppingDistance;
+            }
+
+            _pathUpdateTimer -= Time.deltaTime;
+
+            bool destinationChanged =
+                !_hasDestination ||
+                (_lastDestination - assignedPosition).sqrMagnitude >=
+                Mathf.Pow(_minimumTargetMovement, 2);
+
+            if (_pathUpdateTimer <= 0f || destinationChanged)
+            {
+                _agent.SetDestination(assignedPosition);
+
+                _lastDestination = assignedPosition;
+                _pathUpdateTimer = _pathUpdateInterval;
+                _hasDestination = true;
+            }
+
+            FacePlayer();
+
+            // Waiting enemies must not request attack permission.
+            if (isWaiting) return;
+
+            bool reachedDestination =
+                !_agent.pathPending &&
+                _agent.hasPath &&
+                _agent.remainingDistance <= _agent.stoppingDistance + 0.2f;
+
+            if (!reachedDestination || attackTimer > 0f) return;
+
+            if (_formationManager.TryRequestAttackPermission(this))
+            {
+                _agent.isStopped = true;
+                ChangeState(EnemyState.Attack);
             }
         }
 
@@ -139,11 +201,14 @@ namespace PrabuddhaSingh.FinalCharachterController
 
             _hitLockTimer = duration;
             ChangeState(EnemyState.Idle);
+
             return true;
         }
 
         private void FacePlayer()
         {
+            if (_player == null) return;
+
             Vector3 lookDirection = _player.position - transform.position;
             lookDirection.y = 0f;
 
@@ -151,40 +216,43 @@ namespace PrabuddhaSingh.FinalCharachterController
 
             Quaternion rotationTarget = Quaternion.LookRotation(lookDirection);
 
-            transform.rotation = Quaternion.Slerp(transform.rotation, rotationTarget, _rotationSpeed * Time.deltaTime);
+            transform.rotation = Quaternion.Slerp(
+                transform.rotation,
+                rotationTarget,
+                _rotationSpeed * Time.deltaTime);
         }
+
         private void IdleState() //0
         {
-            _agent.isStopped = true;
+            if (_agent != null && _agent.enabled && _agent.isOnNavMesh)
+            {
+                _agent.isStopped = true;
+            }
         }
 
-        private void ChaseState() //2
+        private void AttackState() //3
         {
-            _agent.isStopped = false;
-            if(_agent.stoppingDistance != _stoppingDistance)
-            {
-                _agent.stoppingDistance = _stoppingDistance;
-            }
-            _pathUpdateTimer += Time.deltaTime;
-
-            bool targetMoved = (_player.position - _lastDestination).sqrMagnitude >= Mathf.Pow(_minimumTargetMovement, 2);
-            if (_pathUpdateTimer <= 0f || targetMoved)
-            {
-                _agent.SetDestination(_player.position);
-                _lastDestination = _player.position;
-                _pathUpdateTimer = _pathUpdateInterval;
-            }
-        }
-
-        private void AttackState()
-        { //3
             _agent.isStopped = true;
-            if (attackTimer <= 0) attackTimer = _attackCooldown;
+            FacePlayer();
+
+            if (_distance > _disengageRange)
+            {
+                _formationManager?.ReleaseAttackPermission(this);
+
+                _hasDestination = false;
+                _pathUpdateTimer = 0f;
+
+                ChangeState(EnemyState.Chase);
+                return;
+            }
         }
 
-        private void DeadState()
-        { //4
+        private void DeadState() //4
+        {
             _isDead = true;
+
+            _formationManager?.ReleaseAttackPermission(this);
+
             if (_agent != null && _agent.enabled && _agent.isOnNavMesh)
             {
                 _agent.isStopped = true;
@@ -193,18 +261,22 @@ namespace PrabuddhaSingh.FinalCharachterController
             }
         }
 
+        // Called by the attack animation event when the attack animation finishes.
         public void OnAttackFinished()
         {
+            _formationManager?.ReleaseAttackPermission(this);
+
+            _hasDestination = false;
+            _pathUpdateTimer = 0f;
 
             ChangeState(EnemyState.Chase);
-
         }
 
         private void OnPlayerDied()
         {
             _playerisDead = true;
 
-            if(_agent != null && _agent.enabled && _agent.isOnNavMesh)
+            if (_agent != null && _agent.enabled && _agent.isOnNavMesh)
             {
                 _agent.isStopped = true;
                 _agent.ResetPath();
@@ -212,30 +284,41 @@ namespace PrabuddhaSingh.FinalCharachterController
             }
 
             ChangeState(EnemyState.Idle);
-
         }
 
-        public void OnEnable()
+        private void OnEnable()
         {
+            if (_formationManager != null && !_isRegistered)
+            {
+                _formationManager.RegisterEnemy(this);
+                _isRegistered = true;
+            }
+
             if (_enemyAttackHitBox != null)
             {
                 _enemyAttackHitBox.OnPlayerHit += HandleEnemyAttackImpactSound;
             }
 
-            if(_playerHealth != null)
+            if (_playerHealth != null)
             {
                 _playerHealth.OnPlayerDeath += OnPlayerDied;
             }
         }
 
-        public void OnDisable()
+        private void OnDisable()
         {
+            if (_formationManager != null && _isRegistered)
+            {
+                _formationManager.UnregisterEnemy(this);
+                _isRegistered = false;
+            }
+
             if (_enemyAttackHitBox != null)
             {
                 _enemyAttackHitBox.OnPlayerHit -= HandleEnemyAttackImpactSound;
             }
 
-            if(_playerHealth != null)
+            if (_playerHealth != null)
             {
                 _playerHealth.OnPlayerDeath -= OnPlayerDied;
             }
@@ -250,6 +333,5 @@ namespace PrabuddhaSingh.FinalCharachterController
         {
             _waveManager = waveManager;
         }
-
     }
 }
