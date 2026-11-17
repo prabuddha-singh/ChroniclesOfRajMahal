@@ -7600,15 +7600,6 @@ AnimationClip:
         inWeight: 0.33333334
         outWeight: 0.33333334
       - serializedVersion: 3
-        time: 0.86666673
-        value: -0.04314303
-        inSlope: -0.93200886
-        outSlope: -0.93200886
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0.33333334
-        outWeight: 0.33333334
-      - serializedVersion: 3
         time: 0.90000004
         value: -0.06975736
         inSlope: -0.5114464
@@ -7645,10 +7636,10 @@ AnimationClip:
         inWeight: 0.33333334
         outWeight: 0.33333334
       - serializedVersion: 3
-        time: 1.0333334
-        value: -0.005810255
-        inSlope: 0.46826902
-        outSlope: 0.46826902
+        time: 1.0333333
+        value: -0.04314303
+        inSlope: -0.93200886
+        outSlope: -0.93200886
         tangentMode: 0
         weightedMode: 0
         inWeight: 0.33333334
@@ -31402,15 +31393,6 @@ AnimationClip:
         inWeight: 0.33333334
         outWeight: 0.33333334
       - serializedVersion: 3
-        time: 0.86666673
-        value: -0.04314303
-        inSlope: -0.93200886
-        outSlope: -0.93200886
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0.33333334
-        outWeight: 0.33333334
-      - serializedVersion: 3
         time: 0.90000004
         value: -0.06975736
         inSlope: -0.5114464
@@ -31447,10 +31429,10 @@ AnimationClip:
         inWeight: 0.33333334
         outWeight: 0.33333334
       - serializedVersion: 3
-        time: 1.0333334
-        value: -0.005810255
-        inSlope: 0.46826902
-        outSlope: 0.46826902
+        time: 1.0333333
+        value: -0.04314303
+        inSlope: -0.93200886
+        outSlope: -0.93200886
         tangentMode: 0
         weightedMode: 0
         inWeight: 0.33333334
@@ -46433,7 +46415,21 @@ AnimationClip:
     intParameter: 0
     messageOptions: 0
   - time: 0.93333334
+    functionName: BeginAttackMovement
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 0.93333334
     functionName: PlaySwingSFX
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 1.3666667
+    functionName: BeginAttackRetreat
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0

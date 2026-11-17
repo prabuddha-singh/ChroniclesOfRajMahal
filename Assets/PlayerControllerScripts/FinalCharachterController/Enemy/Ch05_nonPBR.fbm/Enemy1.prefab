@@ -574,15 +574,20 @@ MonoBehaviour:
   _enemyAttackHitBox: {fileID: 0}
   _waveManager: {fileID: 0}
   _playerHealth: {fileID: 0}
+  _formationManager: {fileID: 0}
   _distance: 1
   _rotationSpeed: 10
   _detectionRange: 25
   _attackRange: 1.67
-  _attackCooldown: 2.5
+  _attackCooldown: 3.5
   _stoppingDistance: 1.2
   _avoidancePriority: 50
+  _disengageRange: 4
   _pathUpdateInterval: 0.5
   _minimumTargetMovement: 1.7
+  _attackLungeDistance: 1.55
+  _attackLungeDuration: 0.12
+  _attackRetreatDuration: 0.16
 --- !u!114 &4820946780454523193
 MonoBehaviour:
   m_ObjectHideFlags: 0

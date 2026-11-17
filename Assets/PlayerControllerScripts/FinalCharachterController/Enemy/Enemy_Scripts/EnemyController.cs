@@ -38,6 +38,24 @@ namespace PrabuddhaSingh.FinalCharachterController
         [SerializeField, Min(0.05f)] private float _pathUpdateInterval = 0.2f;
         [SerializeField, Min(0.1f)] private float _minimumTargetMovement = 0.5f;
 
+        [Header("Attack Movement")]
+        [SerializeField] private float _attackLungeDistance = 0.55f;
+        [SerializeField] private float _attackLungeDuration = 0.12f;
+        [SerializeField] private float _attackRetreatDuration = 0.16f;
+
+        private enum AttackMovementPhase
+        {
+            None,
+            Lunge,
+            Hold,
+            Retreat
+        }
+
+        private AttackMovementPhase _currentMovementPhase;
+        private Vector3 _attackStartPosition;
+        private Vector3 _attackTargetPosition;
+        private float _attackMovementTimer;
+
         private float attackTimer;
         private float _pathUpdateTimer;
         private Vector3 _lastDestination;
@@ -97,14 +115,9 @@ namespace PrabuddhaSingh.FinalCharachterController
                 return;
             }
 
+            UpdateAttackMovement();
             _distance = Vector3.Distance(transform.position, _player.position);
 
-            if (_distance > _detectionRange)
-            {
-                ChangeState(EnemyState.Idle);
-                IdleState();
-                return;
-            }
 
             if (_currentState == EnemyState.Attack)
             {
@@ -124,6 +137,7 @@ namespace PrabuddhaSingh.FinalCharachterController
             // Release the attack slot when leaving the Attack state.
             if (_currentState == EnemyState.Attack)
             {
+                FinishAttackMovement();
                 _formationManager?.ReleaseAttackPermission(this);
             }
 
@@ -160,18 +174,20 @@ namespace PrabuddhaSingh.FinalCharachterController
                 _agent.stoppingDistance = _stoppingDistance;
             }
 
+            Vector3 movementTarget =_formationManager.GetSeparationTarget(this, assignedPosition);
+
             _pathUpdateTimer -= Time.deltaTime;
 
             bool destinationChanged =
                 !_hasDestination ||
-                (_lastDestination - assignedPosition).sqrMagnitude >=
+                (_lastDestination - movementTarget).sqrMagnitude >=
                 Mathf.Pow(_minimumTargetMovement, 2);
 
             if (_pathUpdateTimer <= 0f || destinationChanged)
             {
-                _agent.SetDestination(assignedPosition);
+                _agent.SetDestination(movementTarget);
 
-                _lastDestination = assignedPosition;
+                _lastDestination = movementTarget;
                 _pathUpdateTimer = _pathUpdateInterval;
                 _hasDestination = true;
             }
@@ -179,14 +195,30 @@ namespace PrabuddhaSingh.FinalCharachterController
             FacePlayer();
 
             // Waiting enemies must not request attack permission.
-            if (isWaiting) return;
+            if (isWaiting)
+            {
+                bool reachedWaitingPosition = !_agent.pathPending && _agent.hasPath && _agent.remainingDistance <= _agent.stoppingDistance + 0.2f;
+
+                if (reachedWaitingPosition)
+                {
+                    ChangeState(EnemyState.Idle);
+                    _agent.isStopped = true;
+                }
+                else
+                {
+                    ChangeState(EnemyState.Chase);
+                }
+                return;
+            }
+
+            ChangeState(EnemyState.Chase);
 
             bool reachedDestination =
                 !_agent.pathPending &&
                 _agent.hasPath &&
                 _agent.remainingDistance <= _agent.stoppingDistance + 0.2f;
 
-            if (!reachedDestination || attackTimer > 0f) return;
+            if (!reachedDestination || attackTimer > 0f || !_formationManager.CanEnemiesStartAttack) return;
 
             if (_formationManager.TryRequestAttackPermission(this))
             {
@@ -247,11 +279,97 @@ namespace PrabuddhaSingh.FinalCharachterController
             }
         }
 
+        private void BeginAttackMovement()
+        {
+            Debug.Log("Lunge called");
+            if (_agent == null || !_agent.enabled || !_agent.isOnNavMesh) return;
+
+            _attackStartPosition = transform.position;
+
+            Vector3 direction = _player.position - transform.position;
+            direction.y = 0f;
+
+            direction.Normalize();
+
+            _attackTargetPosition = transform.position + direction * _attackLungeDistance;
+
+            if (NavMesh.Raycast(_attackStartPosition, _attackTargetPosition, out NavMeshHit hit, NavMesh.AllAreas))
+            {
+                _attackTargetPosition = hit.position;
+            }
+
+            _agent.isStopped = true;
+            _agent.velocity = Vector3.zero;
+            _agent.obstacleAvoidanceType = ObstacleAvoidanceType.NoObstacleAvoidance;
+            _agent.updatePosition = false;
+
+            _attackMovementTimer = 0f;
+            _currentMovementPhase = AttackMovementPhase.Lunge;
+        }
+
+        private void BeginAttackRetreat()
+        {
+            if (_currentMovementPhase == AttackMovementPhase.None || _currentMovementPhase == AttackMovementPhase.Retreat) return;
+
+            _attackMovementTimer = 0f;
+            _currentMovementPhase = AttackMovementPhase.Retreat;
+        }
+
+        private void UpdateAttackMovement()
+        {
+            if (_currentMovementPhase == AttackMovementPhase.None) return;
+
+            _attackMovementTimer += Time.deltaTime;
+
+            if (_currentMovementPhase == AttackMovementPhase.Lunge)
+            {
+                float t = Mathf.Clamp01(_attackMovementTimer / _attackLungeDuration);
+                transform.position = Vector3.Lerp(_attackStartPosition, _attackTargetPosition, t);
+
+                if (t >= 1f)
+                {
+                    _currentMovementPhase = AttackMovementPhase.Hold;
+                    _attackMovementTimer = 0f;
+                }
+            }
+            else if (_currentMovementPhase == AttackMovementPhase.Retreat)
+            {
+                float t = Mathf.Clamp01(_attackMovementTimer / _attackRetreatDuration);
+                transform.position = Vector3.Lerp(_attackTargetPosition, _attackStartPosition, t);
+
+                if (t >= 1f)
+                {
+                    _currentMovementPhase = AttackMovementPhase.None;
+                    _agent.updatePosition = true;
+                    _agent.isStopped = false;
+                }
+            }
+
+            if (_agent != null && _agent.enabled)
+            {
+                _agent.nextPosition = transform.position;
+            }
+        }
+
+        private void FinishAttackMovement()
+        {
+            _currentMovementPhase = AttackMovementPhase.None;
+
+            if (_agent != null && _agent.enabled)
+            {
+                _agent.nextPosition = transform.position;
+                _agent.updatePosition = true;
+                _agent.isStopped = false;
+                _agent.obstacleAvoidanceType = ObstacleAvoidanceType.HighQualityObstacleAvoidance;
+            }
+        }
+
         private void DeadState() //4
         {
             _isDead = true;
-
+            _waveManager?.EnemyDead();
             _formationManager?.ReleaseAttackPermission(this);
+            _formationManager?.ReleasePosition(this);
 
             if (_agent != null && _agent.enabled && _agent.isOnNavMesh)
             {
@@ -264,6 +382,8 @@ namespace PrabuddhaSingh.FinalCharachterController
         // Called by the attack animation event when the attack animation finishes.
         public void OnAttackFinished()
         {
+            FinishAttackMovement();
+
             _formationManager?.ReleaseAttackPermission(this);
 
             _hasDestination = false;
@@ -333,5 +453,7 @@ namespace PrabuddhaSingh.FinalCharachterController
         {
             _waveManager = waveManager;
         }
+
+
     }
 }

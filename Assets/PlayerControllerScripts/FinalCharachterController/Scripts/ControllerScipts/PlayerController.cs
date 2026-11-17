@@ -50,6 +50,9 @@ namespace PrabuddhaSingh.FinalCharachterController
         [Header("environment details")]
         [SerializeField] private LayerMask _groundLayers;
 
+        [Header("Combat Movement Detection")]
+        [SerializeField, Min(0f)] private float _combatMovementThreshold = 0.15f;
+
         private PlayerLocomotionInput _playerLocomotionInput;
         private Vector2 _cameraRotation = Vector2.zero;
         private Vector2 _playerTargetRotation = Vector2.zero;
@@ -80,6 +83,9 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         private float _jumpAnimTimer;
         public bool IsInJumpAnim => _jumpAnimTimer > 0f;
+        private Vector3 _previousPosition;
+
+        public bool IsMovingForCombat { get; private set; }
 
         private PlayerState _playerState;
 
@@ -89,6 +95,7 @@ namespace PrabuddhaSingh.FinalCharachterController
             _playerState = GetComponent<PlayerState>();
             _stepOffSet = _characterController.stepOffset;
             _chachedLateralVelocity = Vector3.zero;
+            _previousPosition = transform.position;
         }
 
         private void Update()
@@ -100,7 +107,8 @@ namespace PrabuddhaSingh.FinalCharachterController
             if (ledgeAssistTimer > 0f)
                 ledgeAssistTimer -= Time.deltaTime;
             HandleLateralMovement();          // then handle lateral movement 
-            UpdateMovementState();            // prioritize updating movement state                                   
+            UpdateMovementState();            // prioritize updating movement state
+            UpdateCombatMovementStatus();                                   
         }
 
         private void UpdateMovementState()
@@ -278,7 +286,7 @@ namespace PrabuddhaSingh.FinalCharachterController
 
             ApplyLedgeAssist();
             Vector3 punchLunge = Vector3.zero;
-            if(_punchLungeTimer > 0f)
+            if (_punchLungeTimer > 0f)
             {
                 float LungeDelta = Mathf.Min(Time.deltaTime, _punchLungeTimer);
                 punchLunge = transform.forward * _punchLungeSpeed * LungeDelta;
@@ -443,9 +451,21 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         public void StartPunchLunge()
         {
-            if(!_isGrounded || _isKnockbackActive) return;
+            if (!_isGrounded || _isKnockbackActive) return;
             _punchLungeTimer = _punchLungeDuration;
             _punchLungeSpeed = _punchLungeDistance / _punchLungeDuration;
+        }
+
+        private void UpdateCombatMovementStatus()
+        {
+            Vector3 displacement = transform.position - _previousPosition;
+            displacement.y = 0f;
+
+            float horizontalSpeed = displacement.magnitude / Mathf.Max(Time.deltaTime, 0.0001f);
+
+            IsMovingForCombat = horizontalSpeed > _combatMovementThreshold;
+
+            _previousPosition = transform.position;
         }
     }
 }
