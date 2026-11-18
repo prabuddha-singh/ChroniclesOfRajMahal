@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Rendering;
 
 namespace PrabuddhaSingh.FinalCharachterController
 {
@@ -66,6 +67,8 @@ namespace PrabuddhaSingh.FinalCharachterController
         private bool _isRegistered;
         private bool _hasDestination;
 
+        private float _debugStuckTimer;
+
         private void Awake()
         {
             _agent = GetComponent<NavMeshAgent>();
@@ -125,7 +128,6 @@ namespace PrabuddhaSingh.FinalCharachterController
                 return;
             }
 
-            ChangeState(EnemyState.Chase);
             UpdateFormationMovement();
         }
 
@@ -174,7 +176,7 @@ namespace PrabuddhaSingh.FinalCharachterController
                 _agent.stoppingDistance = _stoppingDistance;
             }
 
-            Vector3 movementTarget =_formationManager.GetSeparationTarget(this, assignedPosition);
+            Vector3 movementTarget = _formationManager.GetSeparationTarget(this, assignedPosition);
 
             _pathUpdateTimer -= Time.deltaTime;
 
@@ -224,6 +226,36 @@ namespace PrabuddhaSingh.FinalCharachterController
             {
                 _agent.isStopped = true;
                 ChangeState(EnemyState.Attack);
+            }
+
+            bool hasMovementTarget = !_agent.pathPending && _agent.hasPath && _agent.remainingDistance > _agent.stoppingDistance + 0.2f;
+
+            bool isNotMoving = _agent.velocity.sqrMagnitude < 0.01f;
+
+            if (!hasMovementTarget || isNotMoving || _agent.isStopped)
+            {
+                _debugStuckTimer += Time.deltaTime;
+
+                if (_debugStuckTimer >= 3f)
+                {
+                    Debug.LogWarning(
+                        $"ENEMY NAV ISSUE: {name} | " +
+                        $"State: {_currentState} | " +
+                        $"OnNavMesh: {_agent.isOnNavMesh} | " +
+                        $"Stopped: {_agent.isStopped} | " +
+                        $"PathPending: {_agent.pathPending} | " +
+                        $"HasPath: {_agent.hasPath} | " +
+                        $"PathStatus: {_agent.pathStatus} | " +
+                        $"Remaining: {_agent.remainingDistance} | " +
+                        $"Velocity: {_agent.velocity.magnitude:F3}"
+                    );
+
+                    _debugStuckTimer = 0f;
+                }
+            }
+            else
+            {
+                _debugStuckTimer = 0f;
             }
         }
 
@@ -281,7 +313,10 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         private void BeginAttackMovement()
         {
-            Debug.Log("Lunge called");
+            Debug.Log($"BEGIN ATTACK MOVEMENT | {name} | State: {_currentState}",this);
+
+            if(_currentState != EnemyState.Attack || _hitLockTimer > 0f) return;
+
             if (_agent == null || !_agent.enabled || !_agent.isOnNavMesh) return;
 
             _attackStartPosition = transform.position;
@@ -339,6 +374,7 @@ namespace PrabuddhaSingh.FinalCharachterController
 
                 if (t >= 1f)
                 {
+                    Debug.Log($"RETREAT COMPLETED | {name} | Avoidance: {_agent.obstacleAvoidanceType}",this);
                     _currentMovementPhase = AttackMovementPhase.None;
                     _agent.updatePosition = true;
                     _agent.isStopped = false;
@@ -353,6 +389,7 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         private void FinishAttackMovement()
         {
+            Debug.Log($"FINISH ATTACK MOVEMENT | {name} | State: {_currentState}",this);
             _currentMovementPhase = AttackMovementPhase.None;
 
             if (_agent != null && _agent.enabled)

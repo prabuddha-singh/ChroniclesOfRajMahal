@@ -5649,7 +5649,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 355d0b61f539b8445a4317b6e806ec92, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PrabuddhaSingh.FinalCharachterController.PlayerHealth
-  maxHealth: 120
+  maxHealth: 5000
   currentHealth: 0
   hitRecoveryDuration: 1.1
   _playerState: {fileID: 0}
@@ -24883,10 +24883,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PrabuddhaSingh.FinalCharachterController.WaveManager
   enemyPrefab: {fileID: 7989221348577215173, guid: 85cd923dcf397c64e9b4532fef806409, type: 3}
-  startingEnemyCount: 3
+  startingEnemyCount: 9
   enemyIncreasePerWave: 1
   timeBetweenWaves: 3
-  maxWaves: 5
+  maxWaves: 1
   spawnPoints:
   - {fileID: 1406396769}
   - {fileID: 117309991}

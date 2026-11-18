@@ -409,6 +409,8 @@ namespace PrabuddhaSingh.FinalCharachterController
                     _navMeshPath
                 );
 
+                if (!pathFound || _navMeshPath.status != NavMeshPathStatus.PathComplete)
+                    continue;
                 _assignedPositions[enemy] = hit.position;
             }
         }
