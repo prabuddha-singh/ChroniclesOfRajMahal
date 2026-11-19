@@ -213,18 +213,25 @@ namespace PrabuddhaSingh.FinalCharachterController
                 return;
             }
 
-            ChangeState(EnemyState.Chase);
+            bool reachedDestination = !_agent.pathPending && _agent.hasPath && _agent.remainingDistance <= _agent.stoppingDistance + 0.2f;
 
-            bool reachedDestination =
-                !_agent.pathPending &&
-                _agent.hasPath &&
-                _agent.remainingDistance <= _agent.stoppingDistance + 0.2f;
+            if (!reachedDestination)
+            {
+                ChangeState(EnemyState.Chase);
+                return;
+            }
 
-            if (!reachedDestination || attackTimer > 0f || !_formationManager.CanEnemiesStartAttack) return;
+            _agent.isStopped = true;
+            FacePlayer();
+            ChangeState(EnemyState.Idle);
+
+            if (attackTimer > 0f || !_formationManager.CanEnemiesStartAttack)
+            {
+                return;
+            }
 
             if (_formationManager.TryRequestAttackPermission(this))
             {
-                _agent.isStopped = true;
                 ChangeState(EnemyState.Attack);
             }
 
@@ -313,9 +320,9 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         private void BeginAttackMovement()
         {
-            Debug.Log($"BEGIN ATTACK MOVEMENT | {name} | State: {_currentState}",this);
+            Debug.Log($"BEGIN ATTACK MOVEMENT | {name} | State: {_currentState}", this);
 
-            if(_currentState != EnemyState.Attack || _hitLockTimer > 0f) return;
+            if (_currentState != EnemyState.Attack || _hitLockTimer > 0f) return;
 
             if (_agent == null || !_agent.enabled || !_agent.isOnNavMesh) return;
 
@@ -374,7 +381,7 @@ namespace PrabuddhaSingh.FinalCharachterController
 
                 if (t >= 1f)
                 {
-                    Debug.Log($"RETREAT COMPLETED | {name} | Avoidance: {_agent.obstacleAvoidanceType}",this);
+                    Debug.Log($"RETREAT COMPLETED | {name} | Avoidance: {_agent.obstacleAvoidanceType}", this);
                     _currentMovementPhase = AttackMovementPhase.None;
                     _agent.updatePosition = true;
                     _agent.isStopped = false;
@@ -389,7 +396,7 @@ namespace PrabuddhaSingh.FinalCharachterController
 
         private void FinishAttackMovement()
         {
-            Debug.Log($"FINISH ATTACK MOVEMENT | {name} | State: {_currentState}",this);
+            Debug.Log($"FINISH ATTACK MOVEMENT | {name} | State: {_currentState}", this);
             _currentMovementPhase = AttackMovementPhase.None;
 
             if (_agent != null && _agent.enabled)
