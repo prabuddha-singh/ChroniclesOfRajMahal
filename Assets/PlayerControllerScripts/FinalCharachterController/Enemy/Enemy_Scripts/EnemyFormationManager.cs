@@ -47,6 +47,11 @@ namespace PrabuddhaSingh.FinalCharachterController
         [SerializeField, Min(0.05f)] private float _formationUpdateInterval = 0.2f;
         private float _formationUpdateTimer = 0f;
 
+        [Header("Formation Rotation")]
+        [SerializeField, Range(0f, 90f)] private float _rotationDeadZone = 25f;
+        [SerializeField, Min(1f)] private float _formationRotationSpeed = 90f;
+        private float _formationYaw;
+
         [Header("Combat Pacing")]
         [SerializeField, Min(0f)] private float _formationSettleDelay = 1.5f;
 
@@ -59,10 +64,12 @@ namespace PrabuddhaSingh.FinalCharachterController
         {
             _navMeshPath = new NavMeshPath();
             _playerController = GetComponent<PlayerController>();
+            _formationYaw = transform.eulerAngles.y;
         }
 
         private void Update()
         {
+            UpdateFormationRotation();
             UpdateCombatReadiness();
             _formationUpdateTimer -= Time.deltaTime;
 
@@ -188,7 +195,7 @@ namespace PrabuddhaSingh.FinalCharachterController
             if (TryFindFrontPosition(enemy, out position))
             {
                 _assignedPositions.Add(enemy, position);
-                _assignedLocalPositions.Add(enemy, transform.InverseTransformPoint(position));
+                _assignedLocalPositions.Add(enemy, Quaternion.Inverse(Quaternion.Euler(0f, _formationYaw, 0f)) * (position - transform.position));
                 _isWaiting.Add(enemy, false);
                 return true;
             }
@@ -196,7 +203,7 @@ namespace PrabuddhaSingh.FinalCharachterController
             if (TryFindWaitingPosition(enemy, out position))
             {
                 _assignedPositions.Add(enemy, position);
-                _assignedLocalPositions.Add(enemy, transform.InverseTransformPoint(position));
+                _assignedLocalPositions.Add(enemy, Quaternion.Inverse(Quaternion.Euler(0f, _formationYaw, 0f)) * (position - transform.position));
                 _isWaiting.Add(enemy, true);
                 isWaiting = true;
                 return true;
@@ -356,7 +363,7 @@ namespace PrabuddhaSingh.FinalCharachterController
                 if (TryFindFrontPosition(enemy, out Vector3 newPosition))
                 {
                     _assignedPositions[enemy] = newPosition;
-                    _assignedLocalPositions[enemy] = transform.InverseTransformPoint(newPosition);
+                    _assignedLocalPositions[enemy] = Quaternion.Inverse(Quaternion.Euler(0f, _formationYaw, 0f)) * (newPosition - transform.position);
                     _isWaiting[enemy] = false;
 
                     return;
@@ -389,7 +396,11 @@ namespace PrabuddhaSingh.FinalCharachterController
                 NavMeshAgent agent = enemy.GetComponent<NavMeshAgent>();
                 if (agent == null || !agent.isOnNavMesh || !agent.enabled) continue;
 
-                Vector3 candidate = transform.TransformPoint(position.Value);
+                Vector3 localPosition = position.Value;
+
+                Vector3 rotatedOffset = Quaternion.Euler(0f, _formationYaw, 0f) * localPosition;
+
+                Vector3 candidate = transform.position + rotatedOffset;
 
                 if (!NavMesh.SamplePosition(
                     candidate,
@@ -413,6 +424,25 @@ namespace PrabuddhaSingh.FinalCharachterController
                     continue;
                 _assignedPositions[enemy] = hit.position;
             }
+        }
+
+        private void UpdateFormationRotation()
+        {
+            float playerYaw = transform.eulerAngles.y;
+
+            float angleDifference = Mathf.DeltaAngle(
+                _formationYaw,
+                playerYaw
+            );
+
+            if (Mathf.Abs(angleDifference) <= _rotationDeadZone)
+                return;
+
+            _formationYaw = Mathf.MoveTowardsAngle(
+                _formationYaw,
+                playerYaw,
+                _formationRotationSpeed * Time.deltaTime
+            );
         }
 
         public void ReleaseAttackPermission(EnemyController enemy)

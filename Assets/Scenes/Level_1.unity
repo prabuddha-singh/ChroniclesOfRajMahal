@@ -24883,7 +24883,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PrabuddhaSingh.FinalCharachterController.WaveManager
   enemyPrefab: {fileID: 7989221348577215173, guid: 85cd923dcf397c64e9b4532fef806409, type: 3}
-  startingEnemyCount: 9
+  startingEnemyCount: 7
   enemyIncreasePerWave: 1
   timeBetweenWaves: 3
   maxWaves: 1
