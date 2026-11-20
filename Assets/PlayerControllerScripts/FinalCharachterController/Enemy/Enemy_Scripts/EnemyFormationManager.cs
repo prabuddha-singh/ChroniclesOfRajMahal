@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.AI;
+using Unity.VisualScripting;
 
 namespace PrabuddhaSingh.FinalCharachterController
 {
@@ -41,6 +42,21 @@ namespace PrabuddhaSingh.FinalCharachterController
         private readonly Dictionary<EnemyController, Vector3> _assignedLocalPositions = new();
         private readonly Dictionary<EnemyController, bool> _isWaiting = new();
         private readonly HashSet<EnemyController> _activeAttackers = new();
+
+
+        private readonly Queue<EnemyController> _attackQueue = new Queue<EnemyController>();
+
+        private readonly HashSet<EnemyController> _queuedEnemies = new HashSet<EnemyController>();
+
+        private readonly HashSet<EnemyController> _attackTurnCompleted = new HashSet<EnemyController>();
+
+        [Header("Attack Queue Settings")]
+        [SerializeField, Min(0.5f)] private float _attackStartTimeout = 3f;
+
+        private EnemyController _currentAttackCandidate;
+        private float _attackStartTimer;
+        private bool _attackStarted;
+
         private NavMeshPath _navMeshPath;
 
         [Header("Formation Settings")]
@@ -118,7 +134,6 @@ namespace PrabuddhaSingh.FinalCharachterController
 
                 if (distance < 0.001f)
                 {
-                    // Deterministic fallback for enemies occupying the same position.
                     int idA = requestingEnemy.GetInstanceID();
                     int idB = otherEnemy.GetInstanceID();
 
@@ -378,11 +393,87 @@ namespace PrabuddhaSingh.FinalCharachterController
             if (_activeAttackers.Contains(enemy)) return true;
 
             if (!_isWaiting.TryGetValue(enemy, out bool waiting) || waiting) return false;
+            
+            if(_attackTurnCompleted.Contains(enemy)) return false;
+
+            if(_queuedEnemies.Add(enemy)) _attackQueue.Enqueue(enemy);
 
             if (_activeAttackers.Count >= _maxActiveAttackers) return false;
 
-            _activeAttackers.Add(enemy);
-            return true;
+            TryGrantNextAttackPermission();
+
+            return _activeAttackers.Contains(enemy);
+        }
+
+        private void TryGrantNextAttackPermission()
+        {
+            if(_activeAttackers.Count >= _maxActiveAttackers) return;
+
+            while(_attackQueue.Count > 0)
+            {
+                EnemyController nextEnemy = _attackQueue.Dequeue();
+                _queuedEnemies.Remove(nextEnemy);
+
+                if(nextEnemy == null ||
+                !nextEnemy.gameObject.activeInHierarchy ||
+                nextEnemy._currentState == EnemyController.EnemyState.Dead)
+
+                continue;
+
+                if(!_isWaiting.TryGetValue(nextEnemy, out bool waiting)||waiting) continue;
+
+                if(_attackTurnCompleted.Contains(nextEnemy)) continue;
+
+                _activeAttackers.Add(nextEnemy);
+
+                _currentAttackCandidate = nextEnemy;
+                _attackStartTimer = _attackStartTimeout;
+                _attackStarted = false;
+
+                Debug.Log($"ATTACK GRANTED | {nextEnemy.name} | ID : {nextEnemy.GetInstanceID()}",nextEnemy);
+
+                return;
+            }            
+            
+        }
+
+        private int GetEligibleFrontEnemyCount()
+        {
+            int count =0;
+
+            foreach(EnemyController enemy in _registeredEnemies)
+            {
+                if(enemy == null || !enemy.gameObject.activeInHierarchy) continue;
+
+                if(enemy._currentState == EnemyController.EnemyState.Dead) continue;
+
+                if(_isWaiting.TryGetValue(enemy , out bool waiting) && !waiting) count ++;
+            }
+
+            return count;
+            
+        }
+
+        private void RebuildAttackQueue()
+        {
+            _attackTurnCompleted.Clear();
+
+            foreach(EnemyController enemy in _registeredEnemies)
+            {
+                if(enemy == null || !enemy.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                if(enemy._currentState == EnemyController.EnemyState.Dead)
+                continue;
+
+                if(!_isWaiting.TryGetValue(enemy,out bool waiting)||waiting)
+                continue;
+
+                if(_queuedEnemies.Add(enemy))
+                _attackQueue.Enqueue(enemy);
+            }
         }
 
         private void UpdateAssignedPosition()
@@ -421,7 +512,18 @@ namespace PrabuddhaSingh.FinalCharachterController
                 );
 
                 if (!pathFound || _navMeshPath.status != NavMeshPathStatus.PathComplete)
+                {
+                    Debug.LogWarning(
+                      $"FORMATION UPDATE BLOCKED | {enemy.name} | " +
+                      $"PathFound: {pathFound} | " +
+                      $"PathStatus: {_navMeshPath.status} | " +
+                      $"Current: {agent.nextPosition} | " +
+                      $"Target: {hit.position}"
+                    );
+
                     continue;
+
+                }
                 _assignedPositions[enemy] = hit.position;
             }
         }
@@ -449,7 +551,28 @@ namespace PrabuddhaSingh.FinalCharachterController
         {
             if (enemy == null) return;
 
-            _activeAttackers.Remove(enemy);
+            bool released = _activeAttackers.Remove(enemy);
+
+            if(!released) return;
+
+            Debug.Log($"ATTACK RELEASED | {enemy.name} | ID: {enemy.GetInstanceID()}",enemy);
+
+            if(_currentAttackCandidate == enemy)
+            {
+                _currentAttackCandidate = null;
+                _attackStartTimer =0f;
+                _attackStarted = false;
+            }
+
+            _attackTurnCompleted.Add(enemy);
+
+            if(_attackTurnCompleted.Count >= GetEligibleFrontEnemyCount())
+            {
+                RebuildAttackQueue();
+            }
+
+            TryGrantNextAttackPermission();
+
         }
 
         public void ReleasePosition(EnemyController enemy)

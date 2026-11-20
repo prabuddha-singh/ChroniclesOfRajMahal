@@ -157,6 +157,7 @@ namespace PrabuddhaSingh.FinalCharachterController
         }
 
         // Handles movement towards the position assigned by EnemyFormationManager.
+
         private void UpdateFormationMovement()
         {
             if (_formationManager == null) return;
@@ -169,14 +170,14 @@ namespace PrabuddhaSingh.FinalCharachterController
                 return;
             }
 
-            _agent.isStopped = false;
-
             if (_agent.stoppingDistance != _stoppingDistance)
             {
                 _agent.stoppingDistance = _stoppingDistance;
             }
 
-            Vector3 movementTarget = _formationManager.GetSeparationTarget(this, assignedPosition);
+            // Update destination for both front and waiting enemies.
+            Vector3 movementTarget =
+                _formationManager.GetSeparationTarget(this, assignedPosition);
 
             _pathUpdateTimer -= Time.deltaTime;
 
@@ -196,46 +197,53 @@ namespace PrabuddhaSingh.FinalCharachterController
 
             FacePlayer();
 
-            // Waiting enemies must not request attack permission.
+            bool reachedDestination =
+                !_agent.pathPending &&
+                _agent.hasPath &&
+                _agent.remainingDistance <= _agent.stoppingDistance + 0.2f;
+
+            // Waiting enemies never request attack permission.
             if (isWaiting)
             {
-                bool reachedWaitingPosition = !_agent.pathPending && _agent.hasPath && _agent.remainingDistance <= _agent.stoppingDistance + 0.2f;
-
-                if (reachedWaitingPosition)
+                if (reachedDestination)
                 {
-                    ChangeState(EnemyState.Idle);
                     _agent.isStopped = true;
+                    ChangeState(EnemyState.Idle);
                 }
                 else
                 {
+                    _agent.isStopped = false;
                     ChangeState(EnemyState.Chase);
                 }
+
                 return;
             }
 
-            bool reachedDestination = !_agent.pathPending && _agent.hasPath && _agent.remainingDistance <= _agent.stoppingDistance + 0.2f;
-
+            // Front-position enemies must reach their assigned positions.
             if (!reachedDestination)
             {
+                _agent.isStopped = false;
                 ChangeState(EnemyState.Chase);
                 return;
             }
 
-            _agent.isStopped = true;
+            // Enemy has reached its assigned position.
             FacePlayer();
             ChangeState(EnemyState.Idle);
 
             if (attackTimer > 0f || !_formationManager.CanEnemiesStartAttack)
-            {
                 return;
-            }
 
             if (_formationManager.TryRequestAttackPermission(this))
             {
                 ChangeState(EnemyState.Attack);
             }
 
-            bool hasMovementTarget = !_agent.pathPending && _agent.hasPath && _agent.remainingDistance > _agent.stoppingDistance + 0.2f;
+            // Temporary navigation diagnostic.
+            bool hasMovementTarget =
+                !_agent.pathPending &&
+                _agent.hasPath &&
+                _agent.remainingDistance > _agent.stoppingDistance + 0.2f;
 
             bool isNotMoving = _agent.velocity.sqrMagnitude < 0.01f;
 
@@ -265,6 +273,7 @@ namespace PrabuddhaSingh.FinalCharachterController
                 _debugStuckTimer = 0f;
             }
         }
+
 
         public bool TryPlayHitReaction(float duration)
         {
@@ -426,6 +435,9 @@ namespace PrabuddhaSingh.FinalCharachterController
         // Called by the attack animation event when the attack animation finishes.
         public void OnAttackFinished()
         {
+            Debug.Log($"ATTACK FINISHED EVENT: {name} | ID: {GetInstanceID()}",this);
+
+
             FinishAttackMovement();
 
             _formationManager?.ReleaseAttackPermission(this);

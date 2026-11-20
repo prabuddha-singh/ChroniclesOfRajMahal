@@ -579,7 +579,7 @@ MonoBehaviour:
   _rotationSpeed: 10
   _detectionRange: 25
   _attackRange: 1.67
-  _attackCooldown: 3.5
+  _attackCooldown: 2.5
   _stoppingDistance: 1.2
   _avoidancePriority: 50
   _disengageRange: 4
